@@ -7,20 +7,25 @@ import '@/global.css';
 
 import { Platform } from 'react-native';
 
+import { colors } from '@/theme';
+
 export const Colors = {
+  // Light is the canonical cookbook palette from the design system.
   light: {
-    text: '#000000',
-    background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
+    text: colors.ink,
+    background: colors.cream,
+    backgroundElement: colors.surface,
+    backgroundSelected: colors.creamDeep,
+    textSecondary: colors.inkSoft,
   },
+  // The mockup is light-only; dark is a warm-espresso derivation of the brand
+  // neutrals so dark mode stays on-brand. Refine when a dark design lands.
   dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
+    text: colors.cream,
+    background: '#211E18',
+    backgroundElement: '#2A271F',
+    backgroundSelected: '#39342B',
+    textSecondary: '#B7AE9F',
   },
 } as const;
 
@@ -44,10 +49,10 @@ export const Fonts = Platform.select({
     mono: 'monospace',
   },
   web: {
-    sans: 'var(--font-display)',
+    sans: 'var(--font-sans)',
     serif: 'var(--font-serif)',
-    rounded: 'var(--font-rounded)',
-    mono: 'var(--font-mono)',
+    rounded: 'var(--font-sans)',
+    mono: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
   },
 });
 

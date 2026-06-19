@@ -41,3 +41,12 @@ example
 # generated native folders
 /ios
 /android
+
+# local Claude Code tooling
+.claude/
+.agents/
+skills-lock.json
+
+# planning docs (kept local)
+hearth_business_plan_v7.html
+hearth_architecture_v1.html

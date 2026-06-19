@@ -2,6 +2,7 @@ import { Platform, StyleSheet, Text, type TextProps } from 'react-native';
 
 import { Fonts, ThemeColor } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { colors, fontFamily } from '@/theme';
 
 export type ThemedTextProps = TextProps & {
   type?: 'default' | 'title' | 'small' | 'smallBold' | 'subtitle' | 'link' | 'linkPrimary' | 'code';
@@ -30,40 +31,45 @@ export function ThemedText({ style, type = 'default', themeColor, ...rest }: The
   );
 }
 
+// Weight is encoded in the brand font family (RN can't synthesize weights), so
+// these set fontFamily rather than fontWeight. Headings use Fraunces (serif),
+// operational text uses Inter (sans) — matching the design system.
 const styles = StyleSheet.create({
   small: {
+    fontFamily: fontFamily.sansMedium,
     fontSize: 14,
     lineHeight: 20,
-    fontWeight: 500,
   },
   smallBold: {
+    fontFamily: fontFamily.sansBold,
     fontSize: 14,
     lineHeight: 20,
-    fontWeight: 700,
   },
   default: {
+    fontFamily: fontFamily.sans,
     fontSize: 16,
     lineHeight: 24,
-    fontWeight: 500,
   },
   title: {
+    fontFamily: fontFamily.serifBold,
     fontSize: 48,
-    fontWeight: 600,
     lineHeight: 52,
   },
   subtitle: {
+    fontFamily: fontFamily.serifSemibold,
     fontSize: 32,
     lineHeight: 44,
-    fontWeight: 600,
   },
   link: {
+    fontFamily: fontFamily.sansMedium,
     lineHeight: 30,
     fontSize: 14,
   },
   linkPrimary: {
+    fontFamily: fontFamily.sansSemibold,
     lineHeight: 30,
     fontSize: 14,
-    color: '#3c87f7',
+    color: colors.terracotta,
   },
   code: {
     fontFamily: Fonts.mono,

@@ -1,9 +1,199 @@
-:root {
-  --font-display:
-    Spline Sans, Inter, ui-sans-serif, system-ui, sans-serif, Apple Color Emoji, Segoe UI Emoji,
-    Segoe UI Symbol, Noto Color Emoji;
-  --font-mono:
-    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace;
-  --font-rounded: 'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif;
-  --font-serif: Georgia, 'Times New Roman', serif;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+@import "tailwindcss/utilities.css";
+
+@import "nativewind/theme";
+
+/* =========================================================================
+   Hearth design tokens — the warm cookbook palette.
+   CSS-first source of truth (Tailwind v4). These `@theme` tokens generate the
+   utility classes (bg-*, text-*, border-*, font-*, rounded-*). The same values
+   are mirrored in src/theme/*.ts for inline/StyleSheet usage. Keep in sync.
+   ========================================================================= */
+@theme {
+  /* --- Color: Primary --- */
+  --color-terracotta: #C65A3A;
+  --color-terracotta-deep: #B14E30;
+  --color-olive: #5A6440;
+  --color-olive-deep: #4A5235;
+  --color-sage: #8B9472;
+  --color-cream: #F3EDE2;
+  --color-cream-deep: #EBE3D5;
+
+  /* --- Color: Semantic --- */
+  --color-success: #5A6440;
+  --color-warning: #D9A441;
+  --color-warning-text: #9A6F1C;
+  --color-streak: #C65A3A;
+  --color-error: #A4452E;
+  --color-info: #7E8A9E;
+
+  /* --- Color: Neutrals --- */
+  --color-ink: #2E2A24;
+  --color-ink-soft: #5C564C;
+  --color-muted: #938C7E;
+  --color-border: #DDD4C5;
+  --color-surface: #FBF8F2;
+  --color-background: #F3EDE2;
+
+  /* --- Radius --- (pill = built-in rounded-full) */
+  --radius-card: 22px;
+  --radius-control: 14px;
+
+  /* --- Font families --- (one family per weight; RN can't synthesize weights)
+     `--font-sans` is also the Tailwind default, so unstyled text is Inter. */
+  --font-sans: 'Inter_400Regular';
+  --font-sans-medium: 'Inter_500Medium';
+  --font-sans-semibold: 'Inter_600SemiBold';
+  --font-sans-bold: 'Inter_700Bold';
+  --font-serif: 'Fraunces_400Regular';
+  --font-serif-medium: 'Fraunces_500Medium';
+  --font-serif-semibold: 'Fraunces_600SemiBold';
+  --font-serif-bold: 'Fraunces_700Bold';
+  --font-script: 'DancingScript_600SemiBold';
+}
+
+/* =========================================================================
+   Component utilities — mirror the design-system mockup.
+   Usage notes for React Native:
+   - Typography (`type-*`) is applied to <Text>; it sets family + size + leading.
+   - Buttons: bg/layout class goes on the <Pressable>, label uses `type-button`
+     plus a color utility on the <Text> (color does NOT inherit in RN):
+       <Pressable className="btn btn-primary">
+         <Text className="type-button text-white">Start Cooking</Text>
+       </Pressable>
+     primary/secondary → text-white · ghost → text-olive · tertiary → text-ink
+   - Status pills are a single <Text> (background + color render together).
+   ========================================================================= */
+@layer components {
+  /* --- Surface --- */
+  .card {
+    background-color: var(--color-surface);
+    border-width: 1px;
+    border-color: var(--color-border);
+    border-radius: var(--radius-card);
+    padding: 24px;
+  }
+
+  /* --- Typography scale --- */
+  .type-display {
+    font-family: var(--font-serif-semibold);
+    font-size: 64px;
+    line-height: 64px;
+    letter-spacing: -1.6px;
+    color: var(--color-ink);
+  }
+  .type-script {
+    font-family: var(--font-script);
+    font-size: 30px;
+    line-height: 33px;
+    color: var(--color-terracotta);
+  }
+  .type-h1 {
+    font-family: var(--font-serif-bold);
+    font-size: 32px;
+    line-height: 38px;
+    letter-spacing: -0.6px;
+    color: var(--color-ink);
+  }
+  .type-h2 {
+    font-family: var(--font-serif-semibold);
+    font-size: 24px;
+    line-height: 31px;
+    letter-spacing: -0.24px;
+    color: var(--color-ink);
+  }
+  .type-h3 {
+    font-family: var(--font-serif-semibold);
+    font-size: 20px;
+    line-height: 26px;
+    color: var(--color-ink);
+  }
+  .type-h4 {
+    font-family: var(--font-sans-semibold);
+    font-size: 16px;
+    line-height: 22px;
+    color: var(--color-ink);
+  }
+  .type-body-lg {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 26px;
+    color: var(--color-ink);
+  }
+  .type-body {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 22px;
+    color: var(--color-ink);
+  }
+  .type-body-sm {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    line-height: 21px;
+    color: var(--color-ink-soft);
+  }
+  .type-caption {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    line-height: 15px;
+    color: var(--color-muted);
+  }
+
+  /* --- Buttons --- */
+  .btn {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 999px;
+    padding-top: 13px;
+    padding-bottom: 13px;
+    padding-left: 26px;
+    padding-right: 26px;
+  }
+  .type-button {
+    font-family: var(--font-sans-semibold);
+    font-size: 14px;
+    line-height: 18px;
+  }
+  .btn-primary {
+    background-color: var(--color-terracotta);
+  }
+  .btn-secondary {
+    background-color: var(--color-olive);
+  }
+  .btn-ghost {
+    background-color: transparent;
+    border-width: 1.5px;
+    border-color: var(--color-olive);
+  }
+  .btn-tertiary {
+    background-color: var(--color-cream-deep);
+  }
+
+  /* --- Status pills --- (single <Text>) */
+  .pill {
+    align-self: flex-start;
+    border-radius: 999px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    padding-left: 14px;
+    padding-right: 14px;
+    font-family: var(--font-sans-semibold);
+    font-size: 12px;
+    line-height: 16px;
+  }
+  .pill-fresh {
+    background-color: rgb(90 100 64 / 0.14);
+    color: var(--color-olive);
+  }
+  .pill-soon {
+    background-color: rgb(217 164 65 / 0.18);
+    color: var(--color-warning-text);
+  }
+  .pill-red {
+    background-color: rgb(164 69 46 / 0.14);
+    color: var(--color-error);
+  }
 }
