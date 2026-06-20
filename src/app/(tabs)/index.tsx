@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useEffect, useMemo } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,10 +9,10 @@ import { usePantryStore } from '@/stores/pantry-store';
 
 // Tab 1 — Home (Today). Centerpiece is the Panic Button (US-003). Red Zone
 // cards / savings / streak come in later steps. // TODO(design): throughout.
+// NOTE(v2): this pantry-first Home is replaced by the image reels feed in a later
+// migration step; kept as-is for now beyond removing the old push deep-link handling.
 export default function HomeScreen() {
   const router = useRouter();
-  // Set when the user taps the Sunday push (US-007): emphasize expiry items.
-  const { highlightExpiring } = useLocalSearchParams<{ highlightExpiring?: string }>();
   const items = usePantryStore((s) => s.items);
   const loadAll = usePantryStore((s) => s.loadAll);
   const runPanic = usePanicStore((s) => s.run);
@@ -22,17 +22,14 @@ export default function HomeScreen() {
   }, [loadAll]);
 
   const hasItems = items.length > 0;
-  // Items expiring within the week, soonest first — also what the Sunday push is about.
-  const expiringItems = useMemo(
+  const expiringSoon = useMemo(
     () =>
-      items
-        .map((it) => ({ name: it.ingredient.name, days: daysUntil(it.expires_at) }))
-        .filter((it): it is { name: string; days: number } => it.days !== null && it.days >= 0 && it.days <= 7)
-        .sort((a, b) => a.days - b.days),
+      items.filter((it) => {
+        const d = daysUntil(it.expires_at);
+        return d !== null && d >= 0 && d <= 7;
+      }).length,
     [items]
   );
-  const expiringSoon = expiringItems.length;
-  const isHighlighted = !!highlightExpiring && expiringSoon > 0;
 
   function handlePanic() {
     if (!hasItems) return;
@@ -55,20 +52,6 @@ export default function HomeScreen() {
           ) : (
             <Text className="type-body-sm">Your pantry is empty — scan a receipt to get started.</Text>
           )}
-
-          {/* Expiry highlight — shown when arriving from the Sunday push tap.
-              // TODO(design): this is the structural stand-in until the Red Zone
-              // section lands; replace with the real highlighted Red Zone cards. */}
-          {isHighlighted ? (
-            <View className="mt-3 gap-1 rounded-xl border border-amber-500 p-4">
-              <Text className="type-caption">Expiring this week</Text>
-              {expiringItems.slice(0, 5).map((it) => (
-                <Text key={it.name} className="type-body-sm">
-                  {it.name} · {it.days === 0 ? 'today' : `${it.days} day${it.days === 1 ? '' : 's'}`}
-                </Text>
-              ))}
-            </View>
-          ) : null}
         </View>
 
         {/* Panic Button */}

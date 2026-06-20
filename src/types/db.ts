@@ -15,16 +15,6 @@ export interface DietaryProfile {
   cuisine_prefs: string[];
 }
 
-/** users.notification_prefs jsonb shape (migration 0014, US-007). Sunday push is
- *  opt-out (defaults on); the Profile → Notification Settings toggle persists it. */
-export interface NotificationPrefs {
-  sunday_push: boolean;
-}
-
-export const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = {
-  sunday_push: true,
-};
-
 /** Subset of public.users the client reads for the auth gate. */
 export interface UserProfile {
   id: string;
@@ -35,8 +25,6 @@ export interface UserProfile {
   subscription_tier: SubscriptionTier;
   locale: string | null;
   onboarding_complete: boolean;
-  notification_prefs: NotificationPrefs;
-  last_scan_at: string | null; // ISO timestamp; null until first receipt/scan add
 }
 
 /** One pre-fill item inside pantry_archetypes.ingredient_seeds (architecture §02). */

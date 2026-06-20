@@ -10,7 +10,6 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { AuthProvider, useAuth } from '@/hooks/use-auth';
-import { OneSignalBridge } from '@/hooks/use-onesignal';
 import { fontAssets } from '@/theme';
 
 // Keep the native splash up until the design-system fonts are ready so text
@@ -54,7 +53,6 @@ function RootGate() {
   return (
     <>
       <ShareIntentHandler />
-      <OneSignalBridge />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="(auth)" />
