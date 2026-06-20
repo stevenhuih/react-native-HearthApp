@@ -1,21 +1,36 @@
 import '@/global.css';
 
 import { useFonts } from 'expo-font';
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider, useRouter, useSegments } from 'expo-router';
+import { DarkTheme, Stack, ThemeProvider, useRouter, useSegments } from 'expo-router';
 import { useShareIntent } from 'expo-share-intent';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
-import { useColorScheme } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { AuthProvider, useAuth } from '@/hooks/use-auth';
-import { fontAssets } from '@/theme';
+import { colors, fontAssets } from '@/theme';
 
 // Keep the native splash up until the design-system fonts are ready so text
 // never flashes in a fallback family. The AnimatedSplashOverlay handles the
 // transition once we hand off.
 SplashScreen.preventAutoHideAsync();
+
+// Dark-only navigation theme (design system v2): near-black canvas + white text,
+// regardless of the OS appearance setting.
+const HearthNavTheme = {
+  ...DarkTheme,
+  dark: true,
+  colors: {
+    ...DarkTheme.colors,
+    primary: colors.ember,
+    background: colors.background,
+    card: colors.background,
+    text: colors.ink,
+    border: colors.border,
+    notification: colors.ember,
+  },
+};
 
 /**
  * Auth gate (architecture §06). Redirects based on session + onboarding state:
@@ -62,6 +77,8 @@ function RootGate() {
         <Stack.Screen name="ocr-confirm" options={{ presentation: 'modal' }} />
         <Stack.Screen name="panic-result" options={{ presentation: 'modal' }} />
         <Stack.Screen name="import" options={{ presentation: 'modal' }} />
+        {/* AI assistant (center tab button) — presented full-screen modal. */}
+        <Stack.Screen name="ai" options={{ presentation: 'modal' }} />
         {/* Recipe Detail — full-screen push (sticky "I cooked this" CTA), not a modal. */}
         <Stack.Screen name="recipe/[id]" />
       </Stack>
@@ -93,7 +110,6 @@ function ShareIntentHandler() {
 }
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
   const [fontsLoaded, fontError] = useFonts(fontAssets);
 
   useEffect(() => {
@@ -106,7 +122,7 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <ThemeProvider value={HearthNavTheme}>
         <AuthProvider>
           <AnimatedSplashOverlay />
           <RootGate />

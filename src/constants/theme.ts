@@ -9,24 +9,19 @@ import { Platform } from 'react-native';
 
 import { colors } from '@/theme';
 
+// Dark design system v2 is dark-only — both schemes resolve to the dark canvas
+// so the app looks identical regardless of the OS appearance setting.
+const darkScheme = {
+  text: colors.ink, // white
+  background: colors.background, // #0A0A0B canvas
+  backgroundElement: colors.surface, // #1A1A1D card
+  backgroundSelected: colors.card2, // #232327
+  textSecondary: colors.inkSoft, // #B5B5BC
+} as const;
+
 export const Colors = {
-  // Light is the canonical cookbook palette from the design system.
-  light: {
-    text: colors.ink,
-    background: colors.cream,
-    backgroundElement: colors.surface,
-    backgroundSelected: colors.creamDeep,
-    textSecondary: colors.inkSoft,
-  },
-  // The mockup is light-only; dark is a warm-espresso derivation of the brand
-  // neutrals so dark mode stays on-brand. Refine when a dark design lands.
-  dark: {
-    text: colors.cream,
-    background: '#211E18',
-    backgroundElement: '#2A271F',
-    backgroundSelected: '#39342B',
-    textSecondary: '#B7AE9F',
-  },
+  light: darkScheme,
+  dark: darkScheme,
 } as const;
 
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
@@ -50,7 +45,7 @@ export const Fonts = Platform.select({
   },
   web: {
     sans: 'var(--font-sans)',
-    serif: 'var(--font-serif)',
+    serif: 'var(--font-sans)', // Inter-only design system — no serif
     rounded: 'var(--font-sans)',
     mono: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
   },

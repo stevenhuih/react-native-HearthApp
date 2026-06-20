@@ -1,39 +1,45 @@
 /**
- * Hearth color tokens — the warm cookbook palette.
+ * Hearth color tokens — DARK / Creme-inspired (design system v2).
  *
- * These hex values are the single source of truth for color in JS/TS contexts
- * that cannot use NativeWind `className` (see AGENTS.md "Style exception rules":
- * cross-platform shadows, dynamic inline styles, SafeAreaView, etc.).
+ * Single source of truth for color in JS/TS contexts that can't use NativeWind
+ * `className` (AGENTS.md style exceptions: shadows, dynamic inline, SafeAreaView…).
+ * Mirrored as `--color-*` tokens in `src/global.css`. Keep the two in sync.
  *
- * The same values are mirrored as `--color-*` tokens in `src/global.css`, which
- * is what generates the `bg-*` / `text-*` / `border-*` utilities. Keep the two
- * in sync — never hardcode a hex in a component.
+ * NOTE: token NAMES are kept stable across the v1→v2 swap so existing code that
+ * imports e.g. `colors.ink` keeps working — the VALUES carry the new dark palette
+ * (`ink` is now white, `terracotta` is now ember, `olive` is now amber).
  */
 export const colors = {
-  // Primary
-  terracotta: '#C65A3A',
-  terracottaDeep: '#B14E30',
-  olive: '#5A6440',
-  oliveDeep: '#4A5235',
-  sage: '#8B9472',
-  cream: '#F3EDE2',
-  creamDeep: '#EBE3D5',
+  // Brand / accent (names kept; values are the dark-system palette)
+  terracotta: '#D4522A', // ember — primary actions
+  terracottaDeep: '#B8431F',
+  olive: '#E8923C', // amber — accent / links / ghost text
+  oliveDeep: '#C9772A',
+  sage: '#E8923C',
+  amber: '#E8923C',
+  ember: '#D4522A',
+  cream: '#FFFFFF',
+  creamDeep: '#232327',
 
   // Semantic
-  success: '#5A6440',
-  warning: '#D9A441',
-  warningText: '#9A6F1C',
-  streak: '#C65A3A',
-  error: '#A4452E',
-  info: '#7E8A9E',
+  success: '#3DBB78', // fresh / high match
+  warning: '#E8923C',
+  warningText: '#E8923C',
+  streak: '#E8923C',
+  error: '#E5564B', // red zone / error
+  info: '#76767E',
+  like: '#FF4D6D',
 
-  // Neutrals
-  ink: '#2E2A24',
-  inkSoft: '#5C564C',
-  muted: '#938C7E',
-  border: '#DDD4C5',
-  surface: '#FBF8F2',
-  background: '#F3EDE2',
+  // Neutrals / surfaces (names kept; `ink` is now primary text = white)
+  ink: '#FFFFFF',
+  inkSoft: '#B5B5BC',
+  muted: '#76767E',
+  border: '#2A2A2E',
+  borderStrong: '#37373C',
+  surface: '#1A1A1D',
+  raise: '#141416',
+  card2: '#232327',
+  background: '#0A0A0B',
   white: '#FFFFFF',
 } as const;
 

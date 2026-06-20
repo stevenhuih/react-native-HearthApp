@@ -31,9 +31,9 @@ export function ThemedText({ style, type = 'default', themeColor, ...rest }: The
   );
 }
 
-// Weight is encoded in the brand font family (RN can't synthesize weights), so
-// these set fontFamily rather than fontWeight. Headings use Fraunces (serif),
-// operational text uses Inter (sans) — matching the design system.
+// Weight is encoded in the font family (RN can't synthesize weights), so these
+// set fontFamily rather than fontWeight. Dark design system v2: Inter throughout,
+// heavy (700–800) for headings.
 const styles = StyleSheet.create({
   small: {
     fontFamily: fontFamily.sansMedium,
@@ -51,14 +51,15 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   title: {
-    fontFamily: fontFamily.serifBold,
-    fontSize: 48,
-    lineHeight: 52,
+    fontFamily: fontFamily.sansExtrabold,
+    fontSize: 34,
+    lineHeight: 36,
+    letterSpacing: -1,
   },
   subtitle: {
-    fontFamily: fontFamily.serifSemibold,
-    fontSize: 32,
-    lineHeight: 44,
+    fontFamily: fontFamily.sansBold,
+    fontSize: 22,
+    lineHeight: 28,
   },
   link: {
     fontFamily: fontFamily.sansMedium,
