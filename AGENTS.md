@@ -1,287 +1,205 @@
-You are an expert React Native + Expo engineer helping build **Hearth**, a production-grade consumer mobile app (iOS + Android) that prevents food waste and eliminates dinner decision fatigue.
+You are an expert React Native + Expo engineer helping build **Hearth**, a production-grade consumer mobile app (iOS + Android). Hearth is a **recipe discovery app with a smart pantry underneath** — a beautiful image-based recipe feed is the front door, and pantry/AI/waste features make cooking those recipes effortless.
 
-> **Note on design:** This document deliberately contains **no visual design system** (no colors, typography, spacing, or component styling rules). The design language is being defined separately and will be added later. Until then, do not invent a brand palette, pick fonts, or hardcode styling values. Build structure, logic, and layout primitives only. When a screen needs styling decisions, leave clearly marked `// TODO(design):` placeholders rather than guessing.
+> **This document is v2.** It supersedes the earlier pantry-first version. If you find logic or instructions describing Hearth as "a kitchen utility, not a recipe browser" with the Panic Button on the home screen, that is the old model — follow this document instead.
+
+> **Note on design:** This document contains **no visual design system** (no final colors, typography, or component styling). A separate design system exists and will be applied in a dedicated pass. Until then, build structure, logic, and layout primitives only. Leave clearly marked `// TODO(design):` placeholders rather than inventing brand values.
 
 ---
 
-## What Hearth Is (Core Product Thesis)
+## What Hearth Is (Core Product Thesis — v2)
 
-Hearth is **a kitchen utility, not a recipe browser.** It intercepts the food-delivery impulse at 7pm. The core loop:
+Hearth is content-first. Users open the app to a **vertical, reels-style feed of recipe images** (Instagram/Creme/Kptncook style) that Hearth produces and curates. They get inspired, tap a recipe, see a full breakdown, and cook it. Underneath, a smart pantry tracks what they have, an AI assistant helps decide what to cook, and cooking auto-maintains the pantry.
 
 ```txt
-Scan grocery receipt → pantry auto-populates → Panic Button generates a meal
-from expiring items → cook it → pantry deducts automatically
+Scroll feed → tap a recipe → see ingredients/steps/nutrition + pantry match
+→ cook it → pantry deducts automatically
 ```
 
-The single most important product principle, which dictates much of the architecture:
+### The two principles that govern the whole architecture
 
-> **The user NEVER manually logs consumption.**
-> Receipt OCR sets quantities at purchase. Recipe completion deducts quantities automatically via a Postgres trigger. The consumption model builds itself from cook history. Any feature that asks the user to actively report "I used 200g of chicken" is wrong and must be rejected.
+**1. The user never manually logs consumption.** (Survives from v1, still law.) Receipt OCR sets quantities at purchase. Cooking a recipe auto-deducts via a Postgres trigger. The pantry maintains itself. Reject any feature that asks the user to report "I used 200g of chicken."
 
-Keep this thesis in mind for every feature. If a proposed implementation adds manual logging friction, push back.
+**2. Recipe origin is a permission boundary, not a label.** (New in v2, equally important.) Every recipe has an `origin`. It determines visibility and whether the recipe can ever go public. This is enforced in Row Level Security, and it is what keeps the link-import feature legally defensible. See the dedicated section below — this is the single most important new rule in v2.
 
 ---
 
-## Single-App Architecture Overview
+## The Five-Tab Navigation
 
-Unlike a multi-app monorepo, Hearth is **one consumer app** with a serverless backend. There is no separate "merchant" or "admin" app in Phase 1. Structure the project for clarity and future scaling, but do not over-engineer a monorepo for a single app.
+The bottom bar is **four tabs plus a prominent center button** (Creme-style — the center is visually distinct and opens the AI assistant as a presented full-screen route, not a flat tab).
 
-```txt
-src/
-  app/                # Expo Router routes (file-based routing)
-    (auth)/           # Auth gate: sign-in, sign-up, magic-link
-    (onboarding)/     # 4-step onboarding flow (gates main app)
-    (tabs)/           # Main tab bar — the logged-in root
-      index.tsx       # Tab 1: Home (Today screen)
-      pantry.tsx      # Tab 2: Pantry
-      explore.tsx     # Tab 3: Explore (Saved + Community)
-      profile.tsx     # Tab 4: Profile & Settings
-    recipe/[id].tsx   # Recipe Detail screen
-  components/         # Reusable presentational components
-  features/           # Feature modules (pantry, panic, import, analytics...)
-  lib/                # Supabase client, API wrappers, utils
-  stores/             # Zustand stores (client state)
-  hooks/              # Shared React hooks
-  types/              # Shared TypeScript types (DB types, domain types)
-  constants/          # Non-design constants (categories, units, config)
-ios/                  # iOS Share Extension (native Swift) lives here
-android/              # Android Share Target (Kotlin intent filter) lives here
-supabase/
-  functions/          # Deno Edge Functions (all AI + complex logic)
-  migrations/         # SQL schema migrations
-```
-
-### Native share-sheet modules
-The **iOS Share Extension** (Swift) and **Android Share Target** (Kotlin intent filter) are native modules that receive shared URLs from TikTok/YouTube/Instagram. They are not React Native screens. They hand the URL off to the `import-recipe` Edge Function. Treat them as thin native bridges — keep all extraction logic server-side.
+1. **Home** — vertical reels-style feed of recipe image cards. Like button on each. Tap → Recipe Detail.
+2. **Explore** — recommended-for-you, theme filters (Asian, Italian…), search bar, and a "Cook from your pantry" row. Discovery, not saved recipes.
+3. **AI (center button)** — the cook-assistant. v1 ships the one-shot "I'm exhausted" action only. Conversational chat is Phase 2.
+4. **Pantry & Shopping List** — two sub-tabs. Pantry (from onboarding, OCR, manual). Shopping List (AI suggests low-stock at top, user confirms to add).
+5. **Profile** — Collections (two sub-tabs: saved + imported), custom recipe upload, and Settings (name, avatar, household, subscription, allergies, stats, flexible reminder day/time).
 
 ---
 
-## Tech Stack (Authoritative — do not substitute)
+## THE RECIPE ORIGIN MODEL (read before touching recipes)
+
+Every recipe has `origin`, one of three values, in two permission classes:
+
+| Origin | Created by | Visible to | Can go public? |
+| :--- | :--- | :--- | :--- |
+| `hearth_featured` | Hearth / hired cooks | Everyone (home feed) | **Yes** — it is the feed |
+| `community` | A user, original work | Self now; everyone in Phase 2 | **Yes** — their own work |
+| `user_import` | Extracted from a link | **Only the importer, forever** | **NO — hard-barred by RLS** |
+
+(There is also `ai_generated` for one-off recipes the AI creates for a single user — treat it like `user_import`: private to that user, never public.)
+
+**The inviolable rule:** A recipe with `origin = 'user_import'` (or `ai_generated`) can **never** appear on the public feed, in Explore, in another user's view, or be promoted to `community`. This is enforced in the RLS SELECT policy on every public-facing query, not just hidden in the UI. Any code path that could surface an imported recipe publicly is a **critical defect**.
+
+**Why:** Recipes-as-facts (ingredients, steps) aren't copyrightable, so extracting them into a private card is defensible. But the source video, photography, and prose ARE protected, and platform ToS restricts reusing their media. Keeping imports private and fact-only is what keeps this legal. Community recipes are the user's own original work, so they can be shared — that's the clean path. **This is not legal advice; an IP lawyer reviews before monetizing at scale.**
+
+When building anything that lists, feeds, or shares recipes: filter by origin at the database layer. The feed query selects only `hearth_featured` (and later `community`) with `status = 'published'`. Never write a feed query that could include `user_import`.
+
+---
+
+## Tech Stack (Authoritative — v2, slimmed)
 
 | Layer | Choice | Notes |
 | :--- | :--- | :--- |
-| Framework | Expo + React Native | Managed workflow where possible; bare only for native share modules |
-| Language | TypeScript (strict mode) | No `any`. Generate DB types from Supabase schema. |
-| Routing | Expo Router | File-based routing |
-| Styling | NativeWind (Tailwind) | **Design tokens TBD — see design note above** |
-| Animation | Reanimated 3 | Swipe gestures, success animations, confetti |
-| Client State | Zustand | UI state, optimistic updates, in-flight flags |
-| Backend / Auth | Supabase | PostgreSQL + Auth + Realtime + Storage + Edge Functions |
-| Auth methods | Supabase Auth | Email/magic link, Apple Sign In, Google OAuth — **NOT Clerk** |
-| Serverless | Supabase Edge Functions (Deno) | All AI calls, all complex logic. **No Node.js server.** |
-| Payments | RevenueCat | Native IAP only — **NOT Stripe** (Stripe is web-only, forbidden on mobile) |
-| Push | OneSignal | Sunday push, expiry alerts |
-| Cron / Queue | Upstash Redis | Expiry queue, Sunday push scheduling |
-| Media | Cloudflare R2 | Recipe images, profile photos |
-| Email | Resend | Welcome, password reset (transactional only) |
-| Error monitoring | Sentry | Crash reports, AI validation failures |
-| Analytics | PostHog | Funnels, retention, event tracking |
-| Deep links | Branch.io | Creator affiliate attribution |
-| Nutrition data | Open Food Facts | Barcode → nutrition (free API) |
+| Framework | Expo + React Native | Managed workflow; dev build when native modules needed |
+| Language | TypeScript (strict) | No `any`. Generate DB types from Supabase. |
+| Routing | Expo Router | File-based; center AI button is a presented modal route |
+| Styling | NativeWind (Tailwind) | **Design tokens deferred — see design note** |
+| Lists/Feed | FlashList (Shopify) | For the reels feed performance |
+| Animation | Reanimated 3 | Feed gestures, like animation, swipe |
+| Client state | Zustand | UI state, optimistic updates |
+| Backend/Auth | Supabase | DB, Auth, Realtime, Storage, Edge Functions, **pg_cron** |
+| Auth methods | Supabase Auth | Email/magic link, Apple, Google — **not Clerk** |
+| Serverless | Supabase Edge Functions (Deno) | All AI, import, OCR. **No Node server.** |
+| Payments | RevenueCat | Native IAP only — **never Stripe** |
+| Notifications | **expo-notifications** | On-device local reminders, any day/time — **not OneSignal** |
+| Media | Cloudflare R2 | Recipe images, avatars. **No video hosting.** |
+| Email | Resend | Transactional only |
+| Monitoring | Sentry + PostHog | Add when convenient |
+| Nutrition | Open Food Facts | Free API |
 
-### AI services (called ONLY from Edge Functions — never the client)
+### AI services (Edge Functions only — keys never in the client)
 
-| Service | Use | Approx cost |
-| :--- | :--- | :--- |
-| Google Vision API | Receipt OCR only | ~$0.0015/scan |
-| OpenAI Whisper | Audio transcription (share-sheet fallback only) | ~$0.006/min |
-| GPT-4o-mini | Recipe extraction, Panic Button, Sunday push copy | ~$0.002/call |
-| GPT-4o Vision | Pan & Scan produce (Plus tier only) | ~$0.01/scan |
-| GPT-4o | Weekly meal plan (Plus/Family only, once per 6 days) | ~$0.05/call |
+| Service | Use |
+| :--- | :--- |
+| GPT-4o-mini | "I'm exhausted" generation, import structuring, recipe drafting, tags |
+| Google Vision | Receipt OCR only |
+| Whisper | **Optional**, only inside link-import when a video has no written recipe |
+| GPT-4o | Conversational AI assistant (Phase 2, Plus only) |
 
-**Cost discipline is a feature.** Use GPT-4o-mini wherever possible. Reserve GPT-4o for the weekly meal plan only. Never call GPT-4o Vision on every pantry view. The three deterministic features below must never call an AI:
-- **Quantity deduction** — pure arithmetic on cook (Postgres trigger).
-- **Expiry estimation** — static category → shelf-life lookup table.
-- **Sunday push template** — string template; AI fires only for users with 4+ expiring items.
-
----
-
-## Inviolable Architecture Rules (READ BEFORE ANY TASK)
-
-These are not style preferences. Breaking any of them is a defect.
-
-### 1. Canonical ingredients — zero brands, zero free text
-Every `pantry_item`, `recipe_ingredient`, and `shopping_list_item` **must** resolve to an `ingredient_id` from the canonical `ingredients` table (~211 items across 9 categories). There is no free-text ingredient field anywhere in the data model.
-- OCR strips brand names before matching (e.g. "Kikkoman Light Soy 500ml" → `soy sauce`).
-- Ready-made products that don't map to a canonical ingredient are **silently dropped** — never error, never store as free text.
-- The 9 categories are exactly: `fresh_produce`, `meat_seafood`, `dairy`, `sauces`, `dry_staples`, `canned`, `spices`, `oils`, `frozen`.
-
-### 2. Dual unit system
-Pantry tracks in **stock units** (`ml`, `g`, `count`, `bunch`) for deduction math. The shopping list auto-converts to **purchase units** (`bottle`, `pack`, `tray`, `jar`, `bunch`, `can`) via `ingredients.shopping_unit` and `shopping_qty_per_unit`. Never show "500ml soy sauce" on a shopping list — show "1 bottle soy sauce."
-
-### 3. AI keys live ONLY in Edge Functions
-OpenAI and Google Vision keys are Supabase environment variables. They must **never** appear in the client bundle, in Zustand, in `lib/`, or in any RN code. Every AI call is an authenticated POST to an Edge Function. If you find yourself importing an AI SDK into `src/`, stop — that logic belongs in `supabase/functions/`.
-
-### 4. Row Level Security is the security model
-RLS policies on PostgreSQL enforce data isolation, not client-side checks. A user must be unable to read another user's pantry even if the client has bugs. Every user-facing table has RLS. When you add a table or column, you add its RLS policy in the same migration.
-
-### 5. The cook-completion trigger is sacred
-`cook_logs` INSERT fires a Postgres trigger that: deducts pantry quantities, sets depleted items to `status = 'used'`, updates `waste_analytics`, increments `recipes.cook_count`, updates `saved_recipes.last_cooked_at`, and recomputes `pantry_match_pct` for affected saved recipes. Do not replicate any of this logic client-side. The client fires an optimistic UI success and lets the trigger do the work.
-
-### 6. Panic Button never invents ingredients
-The Panic Button must only return recipes using ingredients currently in the pantry. The Edge Function validates AI output against the pantry list and **retries once with a stricter prompt** if the model hallucinates an ingredient. If the retry fails, it returns the honest SPARSE/EMPTY response — never a recipe requiring something the user doesn't have.
-
-### 7. Allergens are absolute hard constraints
-`dietary_profile.allergens` are passed to every AI prompt as "never use under any circumstances." Server-side validation cross-checks AI output against allergens. An allergen leak is a **critical safety failure** — log it to Sentry with high priority and regenerate. Never ship an AI feature with allergen handling incomplete.
-
-### 8. Payments go through native IAP via RevenueCat
-Mobile platform policy requires native IAP for digital subscriptions. RevenueCat bridges Apple App Store and Google Play Billing. On successful purchase, the RevenueCat webhook updates `users.subscription_tier`, which fires Supabase Realtime to unlock Plus features without an app restart. Never build a Stripe checkout or any web payment flow into the app.
+### Removed from v1 — do NOT reinstall
+- **OneSignal** → replaced by `expo-notifications`.
+- **Branch.io** → deferred (creator affiliate links don't fit the content-first model yet).
+- **Upstash Redis** → replaced by Supabase `pg_cron` for any server scheduling.
+- **Video hosting (Mux/Cloudflare Stream)** → not needed; the feed is images on R2.
+- **Whisper in the core path** → demoted to import-only.
 
 ---
 
-## Database Schema (12 tables — source of truth)
+## Inviolable Architecture Rules
 
-Treat Supabase as the source of truth for all relational data. Generate TypeScript types from the schema; never hand-maintain divergent types.
-
-| Table | Purpose | RLS rule (summary) |
-| :--- | :--- | :--- |
-| `users` | Extends auth.users; profile, tier, dietary profile, household | `id = auth.uid()` |
-| `ingredients` | Canonical ingredient DB (~211 items), read-only to clients | public SELECT; no client writes |
-| `pantry_items` | Core table; user's current pantry | `user_id = auth.uid()` OR same household |
-| `recipes` | Imported + community + AI-generated recipes | `is_community = true` OR `created_by = auth.uid()` |
-| `recipe_ingredients` | Junction: recipe ↔ canonical ingredient | inherits recipe access |
-| `saved_recipes` | User's Explore/Saved list + pantry match % | `user_id = auth.uid()` (personal, not shared) |
-| `cook_logs` | Cook completion events; triggers deduction | `user_id = auth.uid()` |
-| `shopping_list_items` | Smart shopping list in purchase units | `user_id = auth.uid()` |
-| `households` | Family-tier shared workspace + invite code | members only; owner can mutate |
-| `waste_analytics` | Monthly aggregates; updated by trigger + nightly cron | `user_id = auth.uid()`; no direct client write |
-| `pantry_archetypes` | Onboarding seed sets, read-only | public SELECT |
-| `creator_links` | Affiliate attribution; Edge-Function-write only | `creator_user_id = auth.uid()`; no client INSERT |
-
-Key relationships and triggers:
-- `cook_logs` INSERT → trigger → `pantry_items` deduction + `waste_analytics` upsert + recompute `saved_recipes.pantry_match_pct`.
-- `pantry_items` change → Edge Function recomputes `pantry_match_pct` for affected `saved_recipes`.
-- `creator_links` → Branch.io webhook → RevenueCat → `users.subscription_tier`.
-- `households.invite_code` (6-char unique) → join sets `users.household_id`.
+1. **Recipe origin is enforced in RLS.** The feed and all public queries exclude `user_import`/`ai_generated` at the database level. Never surface a private recipe publicly.
+2. **The user never manually logs consumption.** Cooking deducts via the Postgres trigger. No manual "I used X" flows.
+3. **Canonical ingredients for anything that touches the pantry.** Pantry items, shopping list items, and the ingredients of any recipe a user might *cook for deduction* resolve to a canonical `ingredient_id`. Imported recipes may carry unmapped ingredients (`ingredient_id` null + `raw_text`) — the cook trigger skips those gracefully, never errors.
+4. **AI keys live only in Edge Functions.** Never in the client bundle, Zustand, or `lib/`. Every AI call is an authenticated POST to an Edge Function.
+5. **The cook-completion trigger is sacred.** It deducts pantry, marks depleted items used, counts rescued items, and recomputes match %. Do not replicate this client-side. The client fires an optimistic success and trusts the trigger.
+6. **"I'm exhausted" retrieves before it generates.** First try to match an existing Hearth recipe the user can cook (free, promotes our content). Generate with GPT-4o-mini only as a fallback. It must never use an ingredient not in the pantry — validate and retry once, then fall back to an honest response.
+7. **Allergens are absolute hard constraints.** Every AI output (exhausted, import, generation) is cross-checked against `dietary_profile.allergens` server-side. A leak is a critical safety failure — log to Sentry, regenerate. Never paywall the allergen profile; it is always free.
+8. **Payments go through native IAP via RevenueCat.** Never Stripe, never a web payment flow. The webhook updates `subscription_tier`, Realtime unlocks Plus features without restart.
+9. **The feed never costs AI.** Browsing, Explore, theme filters, search, and cook-from-pantry matching are plain database queries. Never call an AI per feed item or per pantry-match.
+10. **Imports extract facts, never media.** Store ingredients/steps/nutrition. Never rehost the source video. Never copy prose verbatim. Keep `source_url` for attribution only.
 
 ---
 
-## API Surface
+## Database Notes
 
-PostgREST auto-generates CRUD endpoints from the schema for simple reads/writes (`/rest/v1/...`). Custom logic and all AI calls go through Edge Functions (`/functions/v1/...`). All requests carry the Supabase JWT.
+14 tables. The pantry spine (`users`, `ingredients`, `pantry_items`, `cook_logs`, `shopping_list_items`, `households`, `pantry_archetypes`, `waste_analytics`) carries over from v1.
 
-**Use PostgREST directly for:** reading pantry items, patching quantity/status, reading saved recipes, reading ingredients, reading shopping list, reading analytics, inserting cook_logs.
+New/changed for v2:
+- **`recipes`** — gains `origin`, `status` (draft/review/published), `hero_image_url`, `cuisine_theme`, `nutrition` (jsonb), `like_count`, `source_url`.
+- **`recipe_steps`** (new) — one row per step, with `step_image_url`, `timer_seconds`, and optional `video_timestamp` for the Creme-style step view.
+- **`recipe_ingredients`** — `ingredient_id` may be null with `raw_text` set, for imports that don't map cleanly.
+- **`likes`** (new) — one per (user, recipe); drives `like_count` and ranking.
+- **`collections`** (new) — `collection_type` is `saved` or `imported` (the two Profile sub-tabs); carries `pantry_match_pct`.
+- **`import_jobs`** (new) — tracks link-import status (queued/processing/done/failed) so the UI can show progress.
 
-**Use Edge Functions for (the 6 functions):**
-- `ocr-receipt` — image → Google Vision → brand strip → canonical map → return for confirmation.
-- `import-recipe` — URL/caption → caption layer → Whisper fallback → GPT-4o-mini extraction → pantry cross-check.
-- `panic-button` — pantry state detection → cuisine-anchored prompt → validate against pantry → single recipe.
-- `sunday-push-scheduler` — Upstash cron Sunday 7am UTC → personalized OneSignal batch.
-- `complete-onboarding` — seed pantry from archetype → set profile → Resend welcome email.
-- `cook-completion-trigger` — Postgres trigger (not HTTP) on `cook_logs` INSERT.
-
-Plus `scan-produce` (Plus), `generate-meal-plan` (Plus/Family, rate-limited once per 6 days), `create-household` / `join-household` (Family).
-
-When building a client call: if it's a plain row read/write that RLS can secure, use the Supabase JS SDK against PostgREST. If it touches an AI service, a secret, or multi-step logic, it's an Edge Function. Never blur this line.
+Generate TypeScript types from the schema. When you add a table or column, add its RLS policy in the same migration.
 
 ---
 
-## State Management Rules
+## State & Realtime
 
-- **Zustand (client state):** in-flight flags, optimistic UI state, the active Panic Button result before it's dismissed, onboarding wizard local state, swipe gesture state. Synchronous, ephemeral, UI-facing.
-- **Supabase (server state):** the source of truth for pantry, recipes, cook history, subscription tier, household, analytics. Read via the SDK; subscribe via Realtime where live sync matters.
-- **Optimistic updates:** Pantry swipes and "I cooked this" should update the UI immediately, then reconcile with the server. If the server rejects, roll back and surface a non-technical message.
+- **Zustand:** UI state, optimistic likes, in-flight flags, the active AI result before dismissal, onboarding wizard state.
+- **Supabase (source of truth):** recipes, pantry, collections, cook history, subscription tier, household.
+- **Realtime subscriptions (only where earned):** `pantry_items` (household sync), `collections.pantry_match_pct` (re-rank after cooking), `users.subscription_tier` (instant Plus unlock), and optionally `recipes.like_count` on a visible card. Do NOT subscribe to the whole feed or to analytics.
+- **Optimistic everywhere it helps:** likes, saves, pantry swipes, "I cooked this" — update UI immediately, reconcile with the server, roll back on rejection with a plain-language message.
 
-### Realtime subscriptions (only where it earns its socket)
-Subscribe via Supabase Realtime for: `pantry_items` (household sync), `saved_recipes.pantry_match_pct` (re-sort after cooking), `shopping_list_items` (Family), and `users.subscription_tier` (instant unlock after payment). **Do not** subscribe to `recipes.cook_count` or `waste_analytics` — those are fetched on mount; live sync adds overhead with no UX benefit.
+---
+
+## Reminders (expo-notifications, on-device)
+
+Reminders are **local notifications scheduled on the device** — no server push, no OneSignal. The user picks a day-of-week and time in Settings (`reminder_prefs` jsonb on `users`). Re-schedule on app launch (and after any pref change) since local schedules don't survive reinstall on their own. Reminder content highlights expiring pantry items / suggests cooking from the pantry. Handle denied notification permission gracefully with a deep link to OS settings.
 
 ---
 
 ## Secrets & Privacy
 
-- Never expose Supabase service-role keys, OpenAI keys, Google Vision keys, Stream/RevenueCat secret keys, or any provider secret in the mobile bundle.
-- All privileged operations run through Edge Functions or rely on RLS with the anon key.
-- Do not mock, log, or store plaintext passwords. Auth is handled entirely by Supabase Auth.
-- Be mindful of region/locale (`users.locale`, `users.currency`) — Hearth targets SG/JP/SEA markets first; OCR and price-estimation tables are locale-aware.
+- Never expose Supabase service-role keys, OpenAI/Vision keys, or RevenueCat secrets in the client.
+- Privileged operations run through Edge Functions or rely on RLS with the anon key.
+- `.env` is gitignored. Never commit keys.
+- Imported content is private to the importer — this is a privacy boundary as well as a legal one.
 
 ---
 
-## Phase Discipline (Build Order Matters)
+## Phase Discipline
 
-Build in strict dependency order. **Steps 5–8 are the hardest and the highest-value — if pantry CRUD, OCR, Panic Button, and share-sheet import all work, the app works.** Everything after extends a proven core.
+**Phase 1 (now):** the five tabs, image feed + likes, Recipe Detail with step view, Explore discovery, "I'm exhausted" one-shot, pantry + OCR + cook deduction (carried over), shopping list with confirm-to-add suggestions, Collections + custom upload + private link import, local reminders, RevenueCat paywalls, household sync.
 
-```txt
-1. Supabase project + DB schema (12 tables)
-2. RLS policies (same migrations as tables)
-3. ingredients table seed (~211 canonical items)
-4. Auth + onboarding flow
-5. ★ Pantry CRUD + swipe gestures
-6. ★ OCR receipt Edge Function
-7. ★ Panic Button Edge Function
-8. ★ Share-sheet import Edge Function
-9. cook_log trigger + auto-deduction
-10. Sunday push scheduler
-11. Explore / Saved tab
-12. Waste analytics
-13. RevenueCat + paywalls
-14. Household Sync (Realtime)
-15. Creator Links + Branch.io
-16. CozZo migration import
-```
+**Phase 2 (do NOT build when asked for Phase 1):** community publishing to the public feed, conversational AI chat (multi-turn, GPT-4o), creator tools/affiliate links, semantic recipe search, the waste-analytics dollar-value display.
 
-**Do not build Phase 2 features when asked for Phase 1.** Phase 2 = Community tab (cook-first posting), full creator marketplace, semantic recipe search (Pinecone). Phase 1 ships the loop above. If a request would pull a Phase 2 feature forward, flag it and confirm before building.
+If a request pulls a Phase 2 feature forward, flag it and confirm before building.
 
-### Free-tier limits to enforce (Phase 1)
-- 2 receipt OCR scans / month
-- 3 Panic Buttons / month
-- 5 share-sheet imports / month
-- Weekly meal plan (GPT-4o) and shareable analytics card are Plus-only.
-- Allergen profile is **always free** (safety must never be paywalled).
-
-Upgrade prompts fire **contextually at the moment a limit is hit**, not randomly and not on app open.
+### Free-tier limits (enforce contextually, at the moment hit)
+- "I'm exhausted" generations: metered (exact numbers in business plan).
+- Link imports: metered.
+- Browsing the feed, Explore, search: **always unlimited — never paywall discovery.**
+- Allergen/dietary profile: **always free.**
 
 ---
 
 ## Styling Rules (structure only — tokens deferred)
 
-Use NativeWind (Tailwind) classes for layout and structure. **Do not** commit a color palette, font family, or spacing scale yet — those are owned by the forthcoming design pass. For now:
-- Build with neutral, replaceable utility classes and layout primitives.
-- Where a brand decision is required, leave a `// TODO(design):` comment and a sensible structural default (e.g. flex layout, sane padding) rather than a hardcoded brand value.
-- Prefer reusable class patterns. If a repeated pattern emerges and a utility would help, note it for the design pass rather than inventing brand-specific utilities now.
+Use NativeWind for layout and structure. Do not commit a brand palette, fonts, or spacing scale yet — those come in the design pass. Leave `// TODO(design):` where a brand decision is needed, with a sane structural default. Use the installed NativeWind version's syntax exactly; don't mix versions.
 
-### NativeWind version
-Use the NativeWind version already installed in this app. Before writing styling code, match the exact syntax, setup, and config patterns of that installed version — do not mix in APIs or examples from a different version.
-
-### Style exception rules (use StyleSheet / inline, not className)
-
-| Component / Scenario | Why | Use instead |
-| :--- | :--- | :--- |
-| `SafeAreaView` (from react-native-safe-area-context) | `className` not supported | Inline styles or StyleSheet |
-| `KeyboardAvoidingView` | Behavior props not supported by className | Inline styles or StyleSheet |
-| `ScrollView` | `contentContainerStyle` | StyleSheet |
-| Cross-platform shadows | Android `elevation` vs iOS `shadowOffset` | StyleSheet |
-| Dynamic widths/heights | Runtime-calculated from device screen | Inline styles |
+### Style exceptions (use StyleSheet/inline, not className)
+SafeAreaView, KeyboardAvoidingView, ScrollView `contentContainerStyle`, cross-platform shadows, and runtime-calculated dynamic widths/heights.
 
 ---
 
 ## Shared Image Rule
 
-Centralize image imports in `src/constants/images.ts`. Import and export all app images (logo marks, placeholders, category icons, empty-state art) there, and consume via the object: `<Image source={images.logoMark} />`. Do not `require` image assets directly inside screens or components without a strong reason.
+Centralize image imports in `src/constants/images.ts`; consume via the object (`images.logoMark`). Recipe and avatar images are remote (R2 URLs), loaded via the image component with a placeholder and lazy loading — never block the feed on image load.
 
 ---
 
-## Code Simplicity & Quality Rules
+## Code Simplicity & Quality
 
-- Avoid overengineering. Refactor only when the need is real, not speculative.
+- Avoid overengineering. Refactor only when needed.
 - Run `npm run lint` and `npm run typecheck` regularly; keep both green.
-- Avoid `any`. Generate DB types from the Supabase schema and keep domain types simple and readable.
-- Be concise, authoritative, and direct in communication.
-- Treat empty states and error states as first-class: explain what happened and what to do next, in plain language — never a raw technical error, never a silent failure. (Copy tone will be refined in the design pass; structure the states now.)
-- When designs eventually arrive, replicate them exactly.
-- Do not build Phase 2 features (Community, payments-as-marketplace, semantic search) when asked for Phase 1 MVP work.
+- Avoid `any`. Generate DB types from Supabase.
+- Empty and error states are first-class: explain what happened and what to do, in plain language — never a raw error, never a silent failure. Especially: a failed import, an empty pre-launch feed, a broken image.
+- Replicate designs exactly once they arrive.
+- Do not build Phase 2 features when asked for Phase 1.
 
 ---
 
 ## Quick Decision Reference
 
-When in doubt, ask these in order:
-
-1. **Does this add manual consumption logging?** → If yes, it's wrong. Redesign.
-2. **Does this store a brand name or free-text ingredient?** → If yes, it's wrong. Map to canonical or drop.
-3. **Does this put an AI/secret key in the client?** → If yes, move it to an Edge Function.
-4. **Does this bypass RLS with a client-side check?** → If yes, add the RLS policy instead.
-5. **Does this duplicate cook-trigger logic on the client?** → If yes, delete it and trust the trigger.
-6. **Could the Panic Button return a missing ingredient here?** → If yes, add validation + retry + honest fallback.
-7. **Is allergen handling complete?** → If no, don't ship it.
-8. **Is this a Phase 2 feature?** → If yes, confirm before building.
-9. **Am I about to hardcode a brand color/font?** → If yes, leave a `// TODO(design):` instead.
+1. **Could this surface a `user_import` or `ai_generated` recipe publicly?** → Critical defect. Bar it in RLS.
+2. **Does this add manual consumption logging?** → Wrong. Redesign.
+3. **Does this put an AI/secret key in the client?** → Move it to an Edge Function.
+4. **Does this call AI per feed item or per pantry-match?** → Wrong. Those are plain queries.
+5. **Does this replicate the cook trigger client-side?** → Delete it; trust the trigger.
+6. **Could "I'm exhausted" return a missing ingredient?** → Validate, retry once, honest fallback.
+7. **Is allergen handling complete and the profile free?** → If not, don't ship.
+8. **Am I reinstalling OneSignal / Branch / Upstash / video hosting?** → Don't. They're removed.
+9. **Is this a Phase 2 feature (community publish, AI chat, affiliate)?** → Confirm first.
+10. **Am I about to hardcode a brand color/font?** → Leave a `// TODO(design):` instead.

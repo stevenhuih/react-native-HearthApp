@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hearth — Design System (Dark)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  /* Creme-inspired dark palette, pulled from the screenshots */
+  --bg:#0A0A0B;          /* near-black app canvas */
+  --bg-raise:#141416;     /* raised surface */
+  --card:#1A1A1D;         /* card surface */
+  --card-2:#232327;       /* secondary card / input */
+  --hairline:#2A2A2E;     /* borders */
+  --hairline-2:#37373C;
+  --text:#FFFFFF;         /* primary text */
+  --text-2:#B5B5BC;       /* secondary text */
+  --text-3:#76767E;       /* muted / meta */
+  --amber:#E8923C;        /* the warm Creme accent (CRUNCHY label, story rings) */
+  --amber-soft:#F2A85C;
+  --ember:#D4522A;        /* Hearth's own ember, kept as a deeper accent */
+  --success:#3DBb78;
+  --warning:#E8923C;
+  --error:#E5564B;
+  --like:#FF4D6D;         /* heart/like */
+  --sans:'Inter',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',monospace;
+  --r-sm:10px; --r-md:16px; --r-lg:24px; --r-xl:32px; --r-pill:999px;
+}
+html{scroll-behavior:smooth;}
+body{font-family:var(--sans);background:#000;color:var(--text);line-height:1.5;-webkit-font-smoothing:antialiased;padding:36px 24px 80px;}
+.wrap{max-width:1280px;margin:0 auto;}
+
+/* Top bar */
+.topbar{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:18px;}
+.topbar h1{font-size:42px;font-weight:800;letter-spacing:-0.03em;line-height:1;}
+.topbar .sub{font-family:var(--mono);font-size:12px;color:var(--amber);letter-spacing:0.1em;text-transform:uppercase;margin-top:10px;}
+.dl-btn{display:inline-flex;align-items:center;gap:9px;background:var(--text);color:#000;border:none;font-family:var(--sans);font-weight:700;font-size:14px;padding:13px 22px;border-radius:var(--r-pill);cursor:pointer;transition:transform .12s,opacity .15s;}
+.dl-btn:hover{transform:translateY(-1px);opacity:.9;}
+
+.note{background:var(--bg-raise);border:1px solid var(--hairline);border-radius:var(--r-md);padding:16px 20px;margin-bottom:30px;font-size:13px;color:var(--text-2);line-height:1.6;}
+.note strong{color:var(--text);}
+
+/* Section heading */
+.sec{margin-bottom:18px;margin-top:46px;}
+.sec-label{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:var(--amber);}
+.sec-title{font-size:24px;font-weight:700;letter-spacing:-0.02em;margin-top:6px;}
+.sec-desc{font-size:13px;color:var(--text-3);margin-top:6px;max-width:560px;line-height:1.6;}
+
+.panel{background:var(--bg-raise);border:1px solid var(--hairline);border-radius:var(--r-lg);padding:30px;}
+
+/* Brand */
+.brand-ph{display:flex;align-items:center;gap:22px;}
+.brand-mark{width:88px;height:88px;border-radius:22px;border:2px dashed var(--hairline-2);background:repeating-linear-gradient(45deg,transparent,transparent 9px,rgba(232,146,60,.06) 9px,rgba(232,146,60,.06) 18px);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.brand-mark span{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-3);text-align:center;line-height:1.4;}
+.brand-name{font-size:34px;font-weight:800;letter-spacing:-0.03em;}
+.brand-name .dot{color:var(--amber);}
+.brand-note{font-size:12px;color:var(--text-3);margin-top:4px;max-width:320px;line-height:1.5;}
+
+/* Colors */
+.color-group{margin-bottom:26px;}
+.color-group:last-child{margin-bottom:0;}
+.group-name{font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-2);margin-bottom:14px;}
+.swatches{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;}
+.swatch .chip{height:72px;border-radius:14px;border:1px solid rgba(255,255,255,0.06);margin-bottom:9px;}
+.swatch .nm{font-size:11px;font-weight:600;letter-spacing:0.02em;color:var(--text);line-height:1.3;}
+.swatch .hex{font-family:var(--mono);font-size:10px;color:var(--text-3);margin-top:2px;}
+
+/* Typography */
+.type-intro{font-size:58px;font-weight:800;letter-spacing:-0.04em;line-height:1;margin-bottom:12px;}
+.type-desc{font-size:13px;color:var(--text-2);line-height:1.6;margin-bottom:28px;max-width:460px;}
+.type-desc strong{color:var(--text);}
+.type-row{display:grid;grid-template-columns:160px 1fr auto auto auto;gap:16px;align-items:center;padding:14px 0;border-top:1px solid var(--hairline);}
+.type-row .use{font-size:13px;color:var(--text-2);}
+.type-row .spec{font-family:var(--mono);font-size:11px;color:var(--text-3);text-align:right;white-space:nowrap;}
+.type-row .spec.w{min-width:70px;}
+.s-display{font-size:34px;font-weight:800;letter-spacing:-0.03em;}
+.s-h1{font-size:28px;font-weight:700;letter-spacing:-0.02em;}
+.s-h2{font-size:22px;font-weight:700;letter-spacing:-0.01em;}
+.s-h3{font-size:18px;font-weight:600;}
+.s-label{font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--amber);}
+.s-bl{font-size:16px;font-weight:400;color:var(--text);}
+.s-bm{font-size:14px;font-weight:400;color:var(--text-2);}
+.s-bs{font-size:13px;font-weight:400;color:var(--text-2);}
+.s-cap{font-size:11px;font-weight:500;color:var(--text-3);}
+
+/* Components */
+.comp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.comp{background:var(--card);border:1px solid var(--hairline);border-radius:var(--r-md);padding:20px;}
+.comp .c-nm{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);margin-bottom:14px;}
+.btn{font-family:var(--sans);font-weight:700;font-size:14px;padding:13px 24px;border-radius:var(--r-pill);border:none;cursor:default;display:inline-flex;align-items:center;gap:8px;}
+.btn-primary{background:var(--text);color:#000;}
+.btn-accent{background:var(--ember);color:#fff;}
+.btn-ghost{background:var(--card-2);color:var(--text);border:1px solid var(--hairline-2);}
+.btn-stack{display:flex;flex-direction:column;gap:10px;align-items:flex-start;}
+.pill-row{display:flex;gap:8px;flex-wrap:wrap;}
+.pill{background:var(--card-2);color:var(--text);border:1px solid var(--hairline-2);border-radius:var(--r-pill);padding:9px 16px;font-size:13px;font-weight:500;display:inline-flex;align-items:center;gap:7px;}
+.pill.active{background:var(--text);color:#000;border-color:var(--text);}
+.story-ring{width:60px;height:60px;border-radius:50%;padding:3px;background:linear-gradient(135deg,var(--amber),var(--ember));}
+.story-ring .inner{width:100%;height:100%;border-radius:50%;background:linear-gradient(135deg,#3a3a3f,#1d1d20);border:2px solid var(--bg);}
+.match-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:var(--r-pill);font-size:12px;font-weight:600;}
+.match-good{background:rgba(61,187,120,0.15);color:var(--success);}
+.match-mid{background:rgba(232,146,60,0.15);color:var(--amber);}
+.match-low{background:rgba(229,86,75,0.15);color:var(--error);}
+.tok-row{display:flex;align-items:center;justify-content:space-between;font-size:12px;padding:6px 0;}
+.tok-row .k{color:var(--text-3);} .tok-row .v{color:var(--text);font-family:var(--mono);}
+.radius-demo{height:8px;background:var(--card-2);margin-top:5px;}
+
+/* SCREEN MOCKUPS */
+.screens{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-top:8px;}
+.phone{background:var(--bg);border:7px solid #1c1c1f;border-radius:38px;overflow:hidden;aspect-ratio:9/19.5;position:relative;display:flex;flex-direction:column;}
+.phone-label{text-align:center;font-family:var(--mono);font-size:11px;color:var(--text-3);margin-top:12px;letter-spacing:0.06em;text-transform:uppercase;}
+.statusbar{display:flex;justify-content:space-between;align-items:center;padding:12px 16px 6px;font-size:11px;font-weight:600;color:var(--text);}
+.statusbar .dots{display:flex;gap:3px;align-items:center;}
+.scr-body{flex:1;overflow:hidden;position:relative;}
+.botnav{display:flex;justify-content:space-around;align-items:center;padding:10px 0 14px;border-top:1px solid var(--hairline);background:var(--bg);}
+.botnav .ic{width:20px;height:20px;border-radius:5px;background:var(--text-3);opacity:.5;}
+.botnav .ic.on{background:var(--text);opacity:1;}
+.botnav .center{width:42px;height:42px;border-radius:50%;background:var(--text);display:flex;align-items:center;justify-content:center;margin-top:-18px;box-shadow:0 0 0 5px var(--bg);}
+.botnav .center .spark{color:#000;font-size:18px;font-weight:800;}
+
+/* Feed screen */
+.feed-top{display:flex;justify-content:space-between;align-items:center;padding:8px 16px 12px;}
+.feed-logo{font-size:20px;font-weight:800;letter-spacing:-0.03em;}
+.feed-logo .dot{color:var(--amber);}
+.feed-actions{display:flex;gap:10px;align-items:center;}
+.feed-pill{background:var(--text);color:#000;font-size:11px;font-weight:700;padding:6px 12px;border-radius:var(--r-pill);}
+.feed-ic{width:18px;height:18px;border-radius:5px;background:var(--card-2);}
+.stories{display:flex;gap:10px;padding:4px 16px 14px;overflow:hidden;}
+.story-sm{width:48px;height:48px;border-radius:50%;padding:2px;background:linear-gradient(135deg,var(--amber),var(--ember));flex-shrink:0;}
+.story-sm .si{width:100%;height:100%;border-radius:50%;background:linear-gradient(135deg,#3a3a3f,#1d1d20);}
+.feed-card{margin:0 14px;border-radius:var(--r-lg);overflow:hidden;position:relative;height:60%;background:linear-gradient(160deg,#4a3f38,#2a2420 60%,#1a1614);}
+.feed-card .heart{position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:50%;background:rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;font-size:14px;}
+.feed-card .meta{position:absolute;bottom:0;left:0;right:0;padding:18px 16px;background:linear-gradient(transparent,rgba(0,0,0,0.85));}
+.feed-card .kicker{font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--amber);margin-bottom:5px;}
+.feed-card .title{font-size:21px;font-weight:800;letter-spacing:-0.02em;line-height:1.1;}
+.feed-filters{display:flex;gap:8px;padding:14px 16px;overflow:hidden;}
+.ffilter{background:var(--card-2);border:1px solid var(--hairline-2);border-radius:var(--r-pill);padding:8px 14px;font-size:12px;font-weight:600;white-space:nowrap;}
+
+/* Detail screen */
+.det-hero{height:48%;background:linear-gradient(160deg,#5a4a3a,#2e2620);position:relative;}
+.det-hero .topbtns{display:flex;justify-content:space-between;padding:12px 16px;}
+.det-hero .tb{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,0.9);}
+.det-body{padding:16px;}
+.det-author{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.det-author .av{width:26px;height:26px;border-radius:50%;background:var(--card-2);}
+.det-author .an{font-size:12px;color:var(--text-2);}
+.det-title{font-size:26px;font-weight:800;letter-spacing:-0.03em;margin-bottom:10px;}
+.det-stats{display:flex;gap:14px;margin-bottom:14px;}
+.det-stat{font-size:11px;color:var(--text-3);display:flex;align-items:center;gap:4px;}
+.det-stat .d{width:11px;height:11px;border-radius:3px;background:var(--card-2);}
+.det-actions{display:flex;gap:8px;}
+.da{flex:1;padding:11px;border-radius:var(--r-pill);font-size:12px;font-weight:700;text-align:center;background:var(--card-2);color:var(--text);}
+.da.main{background:var(--text);color:#000;flex:1.3;}
+
+/* Cookbooks screen */
+.cb-title{font-size:24px;font-weight:800;padding:14px 16px 16px;}
+.cb-sec{font-size:15px;font-weight:700;padding:0 16px 12px;display:flex;align-items:center;gap:6px;}
+.cb-sec .ar{color:var(--text-3);}
+.cb-row{display:flex;gap:10px;padding:0 16px 20px;}
+.cb-card{flex:1;border-radius:var(--r-md);overflow:hidden;height:120px;position:relative;background:linear-gradient(150deg,#3f3a32,#211e1a);}
+.cb-card .cbn{position:absolute;bottom:10px;left:10px;right:10px;font-size:13px;font-weight:700;line-height:1.2;}
+.cb-card .badge{position:absolute;top:8px;left:8px;background:rgba(0,0,0,0.5);border-radius:var(--r-pill);font-size:10px;font-weight:700;padding:3px 8px;}
+.cb-wide{margin:0 16px 12px;border-radius:var(--r-md);overflow:hidden;height:150px;position:relative;background:linear-gradient(150deg,#4a4036,#26211c);}
+.cb-wide .cbn{position:absolute;bottom:38px;left:14px;font-size:17px;font-weight:800;}
+.cb-wide .cbd{position:absolute;bottom:14px;left:14px;right:14px;font-size:11px;color:var(--text-2);}
+
+/* Pantry screen */
+.pan-head{padding:14px 16px;display:flex;justify-content:space-between;align-items:center;}
+.pan-head .h{font-size:22px;font-weight:800;}
+.pan-tabs{display:flex;gap:8px;padding:0 16px 14px;}
+.pan-tab{font-size:12px;font-weight:600;padding:8px 16px;border-radius:var(--r-pill);background:var(--card-2);color:var(--text-2);}
+.pan-tab.on{background:var(--text);color:#000;}
+.pan-section{font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-3);padding:8px 16px;}
+.pan-item{display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--hairline);}
+.pan-item .pi-ic{width:34px;height:34px;border-radius:9px;background:var(--card-2);flex-shrink:0;}
+.pan-item .pi-name{font-size:14px;font-weight:500;flex:1;}
+.pan-item .pi-exp{font-size:11px;font-weight:600;padding:3px 9px;border-radius:var(--r-pill);}
+.exp-red{background:rgba(229,86,75,0.15);color:var(--error);}
+.exp-amber{background:rgba(232,146,60,0.15);color:var(--amber);}
+.exp-ok{background:rgba(61,187,120,0.13);color:var(--success);}
+
+footer{text-align:center;margin-top:60px;font-family:var(--mono);font-size:11px;color:var(--text-3);}
+footer .d{color:var(--amber);}
+
+@media(max-width:1000px){.screens{grid-template-columns:repeat(2,1fr);}.swatches{grid-template-columns:repeat(3,1fr);}.comp-grid{grid-template-columns:1fr;}}
+@media(max-width:560px){.screens{grid-template-columns:1fr;}.type-row{grid-template-columns:110px 1fr;}.type-row .spec{display:none;}}
+@media print{body{background:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact;}.dl-btn{display:none;}.panel,.phone{break-inside:avoid;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <div>
+      <h1>Hearth Design System</h1>
+      <div class="sub">Dark · Creme-inspired · v2</div>
+    </div>
+    <button class="dl-btn" onclick="window.print()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 10l5 5 5-5M5 21h14"/></svg>
+      Download PDF
+    </button>
+  </div>
+
+  <div class="note">
+    <strong>Direction:</strong> dark, cinematic, photo-forward — the Creme aesthetic. Near-black canvas, full-bleed food photography, white sans-serif type, a warm amber accent. This replaces the earlier warm-cream direction. <strong>Brand mark is a placeholder</strong> — drop your final logo in when ready. This is a Hearth system living in the same visual world as the reference, not a copy of another app's identity.
+  </div>
+
+  <!-- BRAND -->
+  <div class="sec"><div class="sec-label">01 — Brand</div><div class="sec-title">Logo placeholder</div></div>
+  <div class="panel">
+    <div class="brand-ph">
+      <div class="brand-mark"><span>Logo<br>TBD</span></div>
+      <div>
+        <div class="brand-name">hearth<span class="dot">.</span></div>
+        <div class="brand-note">Final wordmark and mark to be designed. On the dark canvas, the logo sits in pure white with the amber accent reserved for a single detail.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COLORS -->
+  <div class="sec"><div class="sec-label">02 — Color</div><div class="sec-title">Dark canvas, warm accent</div><div class="sec-desc">Photography is the color in this system — the UI stays near-monochrome so food pops. Amber is the single warm accent, used sparingly for labels, story rings, and highlights.</div></div>
+  <div class="panel">
+    <div class="color-group">
+      <div class="group-name">Surfaces</div>
+      <div class="swatches">
+        <div class="swatch"><div class="chip" style="background:#0A0A0B"></div><div class="nm">Canvas</div><div class="hex">#0A0A0B</div></div>
+        <div class="swatch"><div class="chip" style="background:#141416"></div><div class="nm">Raised</div><div class="hex">#141416</div></div>
+        <div class="swatch"><div class="chip" style="background:#1A1A1D"></div><div class="nm">Card</div><div class="hex">#1A1A1D</div></div>
+        <div class="swatch"><div class="chip" style="background:#232327"></div><div class="nm">Card 2 / Input</div><div class="hex">#232327</div></div>
+        <div class="swatch"><div class="chip" style="background:#2A2A2E"></div><div class="nm">Hairline</div><div class="hex">#2A2A2E</div></div>
+      </div>
+    </div>
+    <div class="color-group">
+      <div class="group-name">Text</div>
+      <div class="swatches">
+        <div class="swatch"><div class="chip" style="background:#FFFFFF"></div><div class="nm">Primary</div><div class="hex">#FFFFFF</div></div>
+        <div class="swatch"><div class="chip" style="background:#B5B5BC"></div><div class="nm">Secondary</div><div class="hex">#B5B5BC</div></div>
+        <div class="swatch"><div class="chip" style="background:#76767E"></div><div class="nm">Muted / Meta</div><div class="hex">#76767E</div></div>
+      </div>
+    </div>
+    <div class="color-group">
+      <div class="group-name">Accent &amp; Semantic</div>
+      <div class="swatches">
+        <div class="swatch"><div class="chip" style="background:#E8923C"></div><div class="nm">Amber (accent)</div><div class="hex">#E8923C</div></div>
+        <div class="swatch"><div class="chip" style="background:#D4522A"></div><div class="nm">Ember (deep)</div><div class="hex">#D4522A</div></div>
+        <div class="swatch"><div class="chip" style="background:#3DBB78"></div><div class="nm">Success / Fresh</div><div class="hex">#3DBB78</div></div>
+        <div class="swatch"><div class="chip" style="background:#E5564B"></div><div class="nm">Error / Red Zone</div><div class="hex">#E5564B</div></div>
+        <div class="swatch"><div class="chip" style="background:#FF4D6D"></div><div class="nm">Like</div><div class="hex">#FF4D6D</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TYPOGRAPHY -->
+  <div class="sec"><div class="sec-label">03 — Typography</div><div class="sec-title">Inter, heavy and tight</div><div class="sec-desc">Creme uses a bold, tightly-tracked sans for impact. Inter at weights 700–800 with negative letter-spacing gives the same punchy, modern editorial feel. No serif — this direction is clean and contemporary.</div></div>
+  <div class="panel">
+    <div class="type-intro">Inter</div>
+    <div class="type-desc"><strong>Inter</strong> across the board, leaning heavy (700–800) for titles with tight negative tracking, regular (400) for body. Uppercase amber labels (like Creme's "CRUNCHY") mark categories.</div>
+    <div class="type-row"><div class="s-display">Display</div><div class="use">Hero recipe titles, screen titles</div><div class="spec">34px</div><div class="spec w">800</div><div class="spec">1.0</div></div>
+    <div class="type-row"><div class="s-h1">Heading 1</div><div class="use">Page titles</div><div class="spec">28px</div><div class="spec w">700</div><div class="spec">1.1</div></div>
+    <div class="type-row"><div class="s-h2">Heading 2</div><div class="use">Section titles</div><div class="spec">22px</div><div class="spec w">700</div><div class="spec">1.2</div></div>
+    <div class="type-row"><div class="s-h3">Heading 3</div><div class="use">Card titles</div><div class="spec">18px</div><div class="spec w">600</div><div class="spec">1.3</div></div>
+    <div class="type-row"><div class="s-label">CATEGORY LABEL</div><div class="use">Amber kicker (e.g. CRUNCHY)</div><div class="spec">13px</div><div class="spec w">700 caps</div><div class="spec">1.2</div></div>
+    <div class="type-row"><div class="s-bl">Body Large</div><div class="use">Recipe descriptions</div><div class="spec">16px</div><div class="spec w">400</div><div class="spec">1.5</div></div>
+    <div class="type-row"><div class="s-bm">Body Medium</div><div class="use">Default body</div><div class="spec">14px</div><div class="spec w">400</div><div class="spec">1.5</div></div>
+    <div class="type-row"><div class="s-bs">Body Small</div><div class="use">Supporting text</div><div class="spec">13px</div><div class="spec w">400</div><div class="spec">1.5</div></div>
+    <div class="type-row"><div class="s-cap">Caption / meta</div><div class="use">Time, stats, labels</div><div class="spec">11px</div><div class="spec w">500</div><div class="spec">1.4</div></div>
+  </div>
+
+  <!-- COMPONENTS -->
+  <div class="sec"><div class="sec-label">04 — Components</div><div class="sec-title">Core elements</div></div>
+  <div class="comp-grid">
+    <div class="comp">
+      <div class="c-nm">Buttons</div>
+      <div class="btn-stack">
+        <button class="btn btn-primary">🔥 Recipe</button>
+        <button class="btn btn-accent">Start Cooking</button>
+        <button class="btn btn-ghost">▶ Play</button>
+      </div>
+    </div>
+    <div class="comp">
+      <div class="c-nm">Filter pills</div>
+      <div class="pill-row">
+        <span class="pill active">For You</span>
+        <span class="pill">🍜 Asian</span>
+        <span class="pill">🍝 Italian</span>
+        <span class="pill">One-Pot</span>
+      </div>
+    </div>
+    <div class="comp">
+      <div class="c-nm">Story rings</div>
+      <div style="display:flex;gap:12px;">
+        <div class="story-ring"><div class="inner"></div></div>
+        <div class="story-ring"><div class="inner"></div></div>
+        <div class="story-ring"><div class="inner"></div></div>
+      </div>
+    </div>
+    <div class="comp">
+      <div class="c-nm">Pantry match chips</div>
+      <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-start;">
+        <span class="match-chip match-good">✓ You have 8 of 9</span>
+        <span class="match-chip match-mid">5 of 9 · needs shopping</span>
+        <span class="match-chip match-low">2 of 9</span>
+      </div>
+    </div>
+    <div class="comp">
+      <div class="c-nm">Expiry / Red Zone</div>
+      <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-start;">
+        <span class="pi-exp exp-ok" style="font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;">Fresh · 6 days</span>
+        <span class="pi-exp exp-amber" style="font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;">Use soon · 2 days</span>
+        <span class="pi-exp exp-red" style="font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;">Red Zone · today</span>
+      </div>
+    </div>
+    <div class="comp">
+      <div class="c-nm">Radius &amp; tokens</div>
+      <div class="tok-row"><span class="k">Card / hero</span><span class="v">24px</span></div>
+      <div class="radius-demo" style="border-radius:24px"></div>
+      <div class="tok-row" style="margin-top:8px"><span class="k">Control</span><span class="v">16px</span></div>
+      <div class="radius-demo" style="border-radius:16px"></div>
+      <div class="tok-row" style="margin-top:8px"><span class="k">Pill</span><span class="v">999px</span></div>
+      <div class="radius-demo" style="border-radius:999px"></div>
+    </div>
+  </div>
+
+  <!-- SCREENS -->
+  <div class="sec"><div class="sec-label">05 — Screens</div><div class="sec-title">The five tabs, Creme-style</div><div class="sec-desc">Layout mockups showing how the system assembles. Photography is represented by gradient placeholders — real food images fill these full-bleed.</div></div>
+
+  <div class="screens">
+
+    <!-- HOME FEED -->
+    <div>
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span class="dots">●●● ⌃ ▭</span></div>
+        <div class="scr-body">
+          <div class="feed-top">
+            <div class="feed-logo">hearth<span class="dot">.</span></div>
+            <div class="feed-actions"><span class="feed-pill">★ Get Plus</span><span class="feed-ic"></span><span class="feed-ic"></span></div>
+          </div>
+          <div class="stories">
+            <div class="story-sm"><div class="si"></div></div>
+            <div class="story-sm"><div class="si"></div></div>
+            <div class="story-sm"><div class="si"></div></div>
+            <div class="story-sm"><div class="si"></div></div>
+            <div class="story-sm"><div class="si"></div></div>
+          </div>
+          <div class="feed-card">
+            <div class="heart">🤍</div>
+            <div class="meta">
+              <div class="kicker">Crunchy</div>
+              <div class="title">Fish Tartare<br>on Nori Shells</div>
+            </div>
+          </div>
+          <div class="feed-filters">
+            <div class="ffilter">🍲 One-Pot</div>
+            <div class="ffilter">🥪 Sandwiches</div>
+            <div class="ffilter">🍽 Dinner</div>
+          </div>
+        </div>
+        <div class="botnav">
+          <div class="ic on"></div><div class="ic"></div>
+          <div class="center"><span class="spark">✦</span></div>
+          <div class="ic"></div><div class="ic"></div>
+        </div>
+      </div>
+      <div class="phone-label">Tab 1 · Home Feed</div>
+    </div>
+
+    <!-- RECIPE DETAIL -->
+    <div>
+      <div class="phone">
+        <div class="scr-body">
+          <div class="det-hero">
+            <div class="statusbar"><span>9:26</span><span class="dots">●●● ⌃ ▭</span></div>
+            <div class="det-hero-inner">
+              <div class="topbtns"><div class="tb"></div><div style="display:flex;gap:8px"><div class="tb"></div><div class="tb"></div></div></div>
+            </div>
+          </div>
+          <div class="det-body">
+            <div class="det-author"><div class="av"></div><div class="an">Hearth Kitchen</div></div>
+            <div class="det-title">Apple Pie</div>
+            <div class="det-stats">
+              <span class="det-stat"><span class="d"></span>1h+</span>
+              <span class="det-stat"><span class="d"></span>3h+</span>
+              <span class="det-stat"><span class="d"></span>16</span>
+            </div>
+            <div style="margin-bottom:14px;"><span class="match-chip match-good">✓ You have 8 of 9</span></div>
+            <div class="det-actions">
+              <div class="da main">🔥 Recipe</div>
+              <div class="da">▶ Cook</div>
+              <div class="da">✦ Ask</div>
+            </div>
+          </div>
+        </div>
+        <div class="botnav">
+          <div class="ic on"></div><div class="ic"></div>
+          <div class="center"><span class="spark">✦</span></div>
+          <div class="ic"></div><div class="ic"></div>
+        </div>
+      </div>
+      <div class="phone-label">Recipe Detail</div>
+    </div>
+
+    <!-- EXPLORE / COLLECTIONS -->
+    <div>
+      <div class="phone">
+        <div class="statusbar"><span>5:21</span><span class="dots">●●● ⌃ ▭</span></div>
+        <div class="scr-body">
+          <div class="cb-title">Explore</div>
+          <div class="cb-sec">Your saves <span class="ar">›</span></div>
+          <div class="cb-row">
+            <div class="cb-card"><div class="badge">187</div><div class="cbn">All saved</div></div>
+            <div class="cb-card"><div class="badge">29</div><div class="cbn">Weeknight fast</div></div>
+          </div>
+          <div class="cb-sec">Get started <span class="ar">›</span></div>
+          <div class="cb-wide"><div class="cbn">Stocks &amp; Broths</div><div class="cbd">Fish stock, roasted veg stock, dashi…</div></div>
+          <div class="feed-filters" style="padding-top:4px">
+            <div class="ffilter">🍜 Asian</div>
+            <div class="ffilter">🍝 Italian</div>
+            <div class="ffilter">🌮 Mexican</div>
+          </div>
+        </div>
+        <div class="botnav">
+          <div class="ic"></div><div class="ic on"></div>
+          <div class="center"><span class="spark">✦</span></div>
+          <div class="ic"></div><div class="ic"></div>
+        </div>
+      </div>
+      <div class="phone-label">Tab 2 · Explore</div>
+    </div>
+
+    <!-- PANTRY -->
+    <div>
+      <div class="phone">
+        <div class="statusbar"><span>5:24</span><span class="dots">●●● ⌃ ▭</span></div>
+        <div class="scr-body">
+          <div class="pan-head"><span class="h">Pantry</span><span style="display:flex;gap:8px"><span class="feed-ic"></span><span class="feed-ic"></span></span></div>
+          <div class="pan-tabs"><span class="pan-tab on">Pantry</span><span class="pan-tab">Shopping List</span></div>
+          <div class="pan-section">Red Zone · 2 items</div>
+          <div class="pan-item"><div class="pi-ic"></div><span class="pi-name">Spinach</span><span class="pi-exp exp-red">Today</span></div>
+          <div class="pan-item"><div class="pi-ic"></div><span class="pi-name">Chicken thigh</span><span class="pi-exp exp-amber">2 days</span></div>
+          <div class="pan-section">Fresh Produce</div>
+          <div class="pan-item"><div class="pi-ic"></div><span class="pi-name">Carrots</span><span class="pi-exp exp-ok">8 days</span></div>
+          <div class="pan-item"><div class="pi-ic"></div><span class="pi-name">Garlic</span><span class="pi-exp exp-ok">3 wks</span></div>
+          <div class="pan-item"><div class="pi-ic"></div><span class="pi-name">Spring onion</span><span class="pi-exp exp-ok">5 days</span></div>
+        </div>
+        <div class="botnav">
+          <div class="ic"></div><div class="ic"></div>
+          <div class="center"><span class="spark">✦</span></div>
+          <div class="ic on"></div><div class="ic"></div>
+        </div>
+      </div>
+      <div class="phone-label">Tab 4 · Pantry &amp; List</div>
+    </div>
+
+  </div>
+
+  <div class="note" style="margin-top:30px;">
+    <strong>The center button is the signature.</strong> Like Creme's glowing center action, Hearth's AI tab is a white circular button floating above the nav bar — the "I'm exhausted" entry point. It's the one element that breaks the dark monochrome, drawing the eye to the app's smartest feature.
+  </div>
+
+  <footer>
+    Hearth Design System <span class="d">·</span> Dark / Creme-inspired <span class="d">·</span> v2 <span class="d">·</span> Brand mark pending <span class="d">·</span> Photography-forward, amber-accented
+  </footer>
+
+</div>
+</body>
+</html>

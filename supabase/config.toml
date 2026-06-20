@@ -371,6 +371,12 @@ authorization_url_path = "/oauth/consent"
 # Allow dynamic client registration
 allow_dynamic_registration = false
 
+# sunday-push-scheduler is cron-invoked (Upstash QStash) and authenticates the
+# caller with a shared `x-cron-secret` header, not a Supabase JWT — so JWT
+# verification must be off for the gateway to let the request through.
+[functions.sunday-push-scheduler]
+verify_jwt = false
+
 [edge_runtime]
 enabled = true
 # Supported request policies: `oneshot`, `per_worker`.

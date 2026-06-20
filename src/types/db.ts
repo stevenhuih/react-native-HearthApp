@@ -15,6 +15,16 @@ export interface DietaryProfile {
   cuisine_prefs: string[];
 }
 
+/** users.notification_prefs jsonb shape (migration 0014, US-007). Sunday push is
+ *  opt-out (defaults on); the Profile → Notification Settings toggle persists it. */
+export interface NotificationPrefs {
+  sunday_push: boolean;
+}
+
+export const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = {
+  sunday_push: true,
+};
+
 /** Subset of public.users the client reads for the auth gate. */
 export interface UserProfile {
   id: string;
@@ -25,6 +35,8 @@ export interface UserProfile {
   subscription_tier: SubscriptionTier;
   locale: string | null;
   onboarding_complete: boolean;
+  notification_prefs: NotificationPrefs;
+  last_scan_at: string | null; // ISO timestamp; null until first receipt/scan add
 }
 
 /** One pre-fill item inside pantry_archetypes.ingredient_seeds (architecture §02). */
@@ -109,3 +121,73 @@ export interface PantryItem {
   updated_at: string;
   ingredient: PantryItemIngredient;
 }
+
+// ── Explore / recipes (step 11) ─────────────────────────────────────────────
+/** Units a recipe ingredient may be expressed in (recipe_ingredients.unit). */
+export type RecipeUnit = 'ml' | 'g' | 'count' | 'tbsp' | 'tsp' | 'cup';
+
+/** One step inside recipes.instructions (jsonb). Shape varies by source — imported
+ *  recipes use {step,text,duration_mins}; ai_generated use {n,text,mins} — so all
+ *  positional fields are optional and normalised at render time. */
+export interface RecipeInstructionStep {
+  n?: number;
+  step?: number;
+  text: string;
+  mins?: number | null;
+  duration_mins?: number | null;
+}
+
+export interface RecipeMacros {
+  calories?: number;
+  protein_g?: number;
+  carbs_g?: number;
+  fat_g?: number;
+}
+
+/** recipes.origin — the v2 permission boundary (AGENTS.md rule #1). `user_import`
+ *  and `ai_generated` are private to the owner and barred from public surfaces by
+ *  RLS; `hearth_featured`/`community` can be public when `status = 'published'`. */
+export type RecipeOrigin = 'hearth_featured' | 'community' | 'user_import' | 'ai_generated';
+export type RecipeStatus = 'draft' | 'review' | 'published';
+export type RecipeDifficulty = 'easy' | 'medium' | 'hard';
+
+export interface Recipe {
+  id: string;
+  origin: RecipeOrigin;
+  status: RecipeStatus;
+  title: string;
+  description: string | null;
+  source_type: string | null;
+  source_url: string | null;
+  hero_image_url: string | null;
+  cuisine_theme: string | null;
+  difficulty: RecipeDifficulty | null;
+  instructions: RecipeInstructionStep[] | null;
+  cook_time_mins: number | null;
+  servings: number; // recipe_ingredients.quantity is per 1 serving
+  nutrition: RecipeMacros | null;
+  like_count: number;
+}
+
+/** A recipe_ingredients row with its canonical ingredient embedded (PostgREST join). */
+export interface RecipeIngredientRow {
+  id: string;
+  ingredient_id: number;
+  quantity: number | null; // per 1 serving
+  unit: RecipeUnit | null;
+  is_optional: boolean;
+  notes: string | null;
+  ingredient: { id: number; name: string; default_unit: StockUnit; track_quantity: boolean };
+}
+
+/** A collections row (type=saved) joined with its recipe — one Saved card. */
+export interface SavedRecipeCard {
+  id: string;
+  pantry_match_pct: number | null;
+  missing_ingredients: number[]; // canonical ingredient_ids not in pantry
+  saved_at: string;
+  recipe: { id: string; title: string; cook_time_mins: number | null };
+}
+
+/** Per-ingredient pantry state on the Recipe Detail screen (§07). */
+export type IngredientMatchStatus = 'have' | 'low' | 'missing';

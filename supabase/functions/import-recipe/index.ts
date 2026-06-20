@@ -5,7 +5,8 @@
 //   2. GPT-4o-mini structures the caption. If incomplete →
 //   3. Whisper fallback (best-effort): transcribe a discoverable media URL.
 // Then map ingredients to canonical ids (drop unmappable), cross-check the
-// pantry, persist recipe + recipe_ingredients + saved_recipes, and return.
+// pantry, persist recipe (origin=user_import) + recipe_ingredients + collection
+// (type=imported), and return.
 //
 // Secret (server-side only): OPENAI_API_KEY (used for GPT + Whisper).
 
@@ -329,19 +330,21 @@ Deno.serve(async (req) => {
       .map((r) => r.ingredient_id);
     const matchPct = total > 0 ? Math.round((have / total) * 100) : 0;
 
-    // 7. Persist recipe + ingredients + saved_recipes (RLS-scoped to the user).
+    // 7. Persist recipe + ingredients + collection (RLS-scoped to the user).
+    // origin = user_import: ALWAYS private to the importer, barred from public
+    // surfaces by RLS (architecture v2 §02, the legal boundary).
     const { data: savedRecipe, error: recErr } = await supabase
       .from('recipes')
       .insert({
         created_by: user.id,
+        origin: 'user_import',
         title: recipe.recipe_name,
         source_url: url,
         source_type: platformFromUrl(url),
         instructions: recipe.steps,
         cook_time_mins: recipe.cook_time_mins,
         servings: recipe.servings ?? 1,
-        macros_per_serving: recipe.macros,
-        is_community: false,
+        nutrition: recipe.macros,
       })
       .select('id')
       .single();
@@ -358,9 +361,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    await supabase.from('saved_recipes').insert({
+    await supabase.from('collections').insert({
       user_id: user.id,
       recipe_id: savedRecipe.id,
+      collection_type: 'imported',
       pantry_match_pct: matchPct,
       missing_ingredients: missing,
     });

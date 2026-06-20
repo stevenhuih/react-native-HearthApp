@@ -25,7 +25,7 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 const PROFILE_COLUMNS =
-  'id, display_name, archetype_id, dietary_profile, household_id, subscription_tier, locale, onboarding_complete';
+  'id, display_name, archetype_id, dietary_profile, household_id, subscription_tier, locale, onboarding_complete, notification_prefs, last_scan_at';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);

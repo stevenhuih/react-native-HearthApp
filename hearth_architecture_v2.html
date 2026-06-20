@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hearth — System Architecture v2.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+:root {
+  --ink:#0D0F14; --ink2:#181C24; --slate:#3A4055; --mist:#6B7285;
+  --fog:#9AA0B0; --cloud:#DDE0E8; --paper:#F2F4F8; --white:#FFFFFF;
+  --ember:#D4522A; --ember-lt:rgba(212,82,42,0.1);
+  --green:#1A7A4A; --green-lt:rgba(26,122,74,0.09);
+  --blue:#1550A8; --blue-lt:rgba(21,80,168,0.09);
+  --amber:#B87A10; --amber-lt:rgba(184,122,16,0.1);
+  --red:#B83232; --red-lt:rgba(184,50,50,0.09);
+  --purple:#6B3FA0; --purple-lt:rgba(107,63,160,0.1);
+  --teal:#0E6E6E; --teal-lt:rgba(14,110,110,0.09);
+  --mono:"IBM Plex Mono",monospace; --sans:"IBM Plex Sans",system-ui,sans-serif; --serif:"IBM Plex Serif",Georgia,serif;
+  --r:6px; --r-lg:12px; --r-xl:18px;
+}
+html { scroll-behavior:smooth; }
+body { font-family:var(--sans); background:var(--paper); color:var(--ink); font-size:14px; line-height:1.6; -webkit-font-smoothing:antialiased; }
+nav { position:sticky; top:0; z-index:200; background:var(--ink); padding:0 40px; display:flex; align-items:center; justify-content:space-between; height:50px; border-bottom:1px solid rgba(255,255,255,0.07); }
+.nav-logo { font-family:var(--mono); font-size:13px; color:var(--white); letter-spacing:0.05em; }
+.nav-logo em { color:var(--ember); font-style:normal; }
+.nav-links { display:flex; list-style:none; }
+.nav-links a { font-family:var(--mono); font-size:10px; color:rgba(255,255,255,0.38); text-decoration:none; letter-spacing:0.08em; text-transform:uppercase; padding:0 11px; height:50px; display:flex; align-items:center; transition:color 0.15s; }
+.nav-links a:hover { color:rgba(255,255,255,0.88); }
+.hero { background:var(--ink2); padding:80px 40px 60px; border-bottom:1px solid rgba(255,255,255,0.07); }
+.hero-inner { max-width:1120px; margin:0 auto; }
+.hero-tag { font-family:var(--mono); font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:var(--ember); margin-bottom:20px; }
+.hero-title { font-family:var(--serif); font-size:clamp(36px,6vw,66px); font-weight:600; color:var(--white); line-height:1.05; margin-bottom:16px; }
+.hero-title em { font-style:italic; color:rgba(255,255,255,0.28); }
+.hero-sub { font-size:15px; color:rgba(255,255,255,0.42); max-width:660px; line-height:1.75; margin-bottom:40px; }
+.hero-pills { display:flex; flex-wrap:wrap; gap:8px; }
+.hero-pill { font-family:var(--mono); font-size:11px; padding:5px 12px; border-radius:100px; background:rgba(255,255,255,0.05); color:rgba(255,255,255,0.5); border:1px solid rgba(255,255,255,0.1); }
+section.s { padding:60px 40px; max-width:1120px; margin:0 auto; }
+hr.div { border:none; border-top:1px solid var(--cloud); margin:0; }
+.s-eye { font-family:var(--mono); font-size:10px; letter-spacing:0.15em; text-transform:uppercase; color:var(--ember); margin-bottom:10px; display:flex; align-items:center; gap:10px; }
+.s-eye::after { content:""; flex:1; height:1px; background:var(--cloud); }
+.s-title { font-family:var(--serif); font-size:clamp(24px,3.5vw,36px); font-weight:600; color:var(--ink); line-height:1.15; margin-bottom:10px; }
+.s-lead { font-size:13px; color:var(--slate); max-width:700px; line-height:1.75; margin-bottom:34px; }
+.tag { display:inline-block; font-family:var(--mono); font-size:9px; letter-spacing:0.09em; text-transform:uppercase; padding:3px 7px; border-radius:100px; }
+.t-ai { background:var(--purple-lt); color:var(--purple); }
+.t-new { background:var(--green-lt); color:var(--green); }
+.t-keep { background:var(--blue-lt); color:var(--blue); }
+.t-change { background:var(--amber-lt); color:var(--amber); }
+.t-drop { background:var(--red-lt); color:var(--red); }
+.diagram { background:var(--white); border:1px solid var(--cloud); border-radius:var(--r-xl); padding:34px; margin-top:26px; }
+.d-layer { margin-bottom:24px; }
+.d-layer:last-child { margin-bottom:0; }
+.d-layer-lbl { font-family:var(--mono); font-size:9px; letter-spacing:0.12em; text-transform:uppercase; color:var(--fog); margin-bottom:10px; padding-bottom:7px; border-bottom:1px solid var(--cloud); }
+.d-nodes { display:flex; gap:8px; flex-wrap:wrap; }
+.d-node { border-radius:var(--r); padding:10px 13px; min-width:108px; border:1px solid transparent; }
+.dn-dark { background:var(--ink); } .dn-ai { background:var(--purple-lt); border-color:rgba(107,63,160,0.18); }
+.dn-infra { background:var(--blue-lt); border-color:rgba(21,80,168,0.18); } .dn-growth { background:var(--green-lt); border-color:rgba(26,122,74,0.18); }
+.dn-data { background:var(--amber-lt); border-color:rgba(184,122,16,0.18); } .dn-pay { background:var(--teal-lt); border-color:rgba(14,110,110,0.18); }
+.dn-name { font-family:var(--mono); font-size:10px; font-weight:500; margin-bottom:2px; }
+.dn-dark .dn-name { color:var(--white); } .dn-ai .dn-name { color:var(--purple); } .dn-infra .dn-name { color:var(--blue); }
+.dn-growth .dn-name { color:var(--green); } .dn-data .dn-name { color:var(--amber); } .dn-pay .dn-name { color:var(--teal); }
+.dn-note { font-size:10px; color:var(--mist); line-height:1.3; } .dn-dark .dn-note { color:rgba(255,255,255,0.3); }
+.d-arrow { font-family:var(--mono); font-size:10px; color:var(--fog); text-align:center; padding:7px 0; letter-spacing:2px; }
+.schema-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:26px; }
+.db-table { background:var(--white); border:1px solid var(--cloud); border-radius:var(--r-lg); overflow:hidden; }
+.db-head { background:var(--ink); padding:10px 14px; display:flex; justify-content:space-between; align-items:center; }
+.db-head-name { font-family:var(--mono); font-size:12px; color:var(--white); font-weight:500; }
+.db-head-tag { font-family:var(--mono); font-size:9px; color:rgba(255,255,255,0.28); }
+.db-field { display:grid; grid-template-columns:120px 64px 1fr; gap:6px; padding:6px 14px; border-bottom:1px solid var(--cloud); }
+.db-field:last-child { border-bottom:none; }
+.db-fn { font-family:var(--mono); font-size:10px; color:var(--ink); font-weight:500; }
+.db-fn.pk { color:var(--amber); } .db-fn.fk { color:var(--purple); }
+.db-ft { font-family:var(--mono); font-size:10px; color:var(--blue); }
+.db-fd { font-size:10px; color:var(--mist); line-height:1.4; }
+.tabs-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-top:26px; }
+.tab-card { background:var(--white); border:1px solid var(--cloud); border-radius:var(--r-lg); padding:16px; }
+.tab-num { font-family:var(--mono); font-size:10px; color:var(--ember); margin-bottom:8px; }
+.tab-name { font-family:var(--serif); font-size:17px; font-weight:600; color:var(--ink); margin-bottom:8px; }
+.tab-desc { font-size:11px; color:var(--slate); line-height:1.55; }
+.tab-card.center { background:var(--ink); border-color:var(--ink); }
+.tab-card.center .tab-name { color:var(--white); } .tab-card.center .tab-desc { color:rgba(255,255,255,0.55); } .tab-card.center .tab-num { color:var(--ember); }
+.ef-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:24px; }
+.ef-card { background:var(--white); border:1px solid var(--cloud); border-radius:var(--r-lg); padding:18px; }
+.ef-name { font-family:var(--mono); font-size:12px; font-weight:500; color:var(--ink); margin-bottom:3px; }
+.ef-trigger { font-family:var(--mono); font-size:10px; color:var(--ember); margin-bottom:8px; }
+.ef-desc { font-size:12px; color:var(--slate); line-height:1.55; margin-bottom:10px; }
+.ef-step { font-size:11px; color:var(--mist); display:flex; gap:7px; line-height:1.45; margin-bottom:3px; }
+.ef-n { font-family:var(--mono); color:var(--fog); flex-shrink:0; font-size:10px; margin-top:1px; }
+.story { background:var(--white); border:1px solid var(--cloud); border-radius:var(--r-lg); overflow:hidden; margin-bottom:12px; }
+.story-head { padding:12px 16px; border-bottom:1px solid var(--cloud); display:flex; align-items:flex-start; gap:10px; }
+.story-id { font-family:var(--mono); font-size:10px; color:var(--mist); flex-shrink:0; padding-top:2px; }
+.story-title { font-size:14px; font-weight:600; color:var(--ink); flex:1; line-height:1.35; }
+.story-tags { display:flex; gap:4px; flex-wrap:wrap; flex-shrink:0; }
+.story-body { padding:14px 16px; }
+.story-stmt { font-size:13px; color:var(--slate); line-height:1.6; margin-bottom:12px; padding:9px 13px; background:var(--paper); border-radius:var(--r); border-left:3px solid var(--ember); font-style:italic; }
+.ac-lbl { font-family:var(--mono); font-size:9px; letter-spacing:0.1em; text-transform:uppercase; color:var(--mist); margin-bottom:8px; display:block; }
+.ac-list { list-style:none; display:flex; flex-direction:column; gap:5px; }
+.ac-list li { font-size:12px; color:var(--slate); display:flex; align-items:flex-start; gap:7px; line-height:1.5; }
+.ac-list li::before { content:"\2713"; color:var(--green); font-weight:700; flex-shrink:0; font-size:11px; margin-top:1px; }
+.ac-list li.edge::before { content:"\26A0"; color:var(--amber); }
+.ac-list li.fail::before { content:"\2717"; color:var(--red); }
+.info-box { background:var(--white); border:1px solid var(--cloud); border-radius:var(--r-lg); padding:20px; margin-top:16px; }
+.info-lbl { font-family:var(--mono); font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--ember); margin-bottom:10px; }
+.info-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; font-size:12px; color:var(--slate); line-height:1.6; }
+.info-grid strong { color:var(--ink); display:block; margin-bottom:2px; }
+.rt-tbl { width:100%; border-collapse:collapse; margin-top:22px; font-size:12px; }
+.rt-tbl th { font-family:var(--mono); font-size:9px; letter-spacing:0.1em; text-transform:uppercase; color:var(--mist); padding:8px 12px; text-align:left; border-bottom:1px solid var(--cloud); background:var(--paper); }
+.rt-tbl td { padding:9px 12px; border-bottom:1px solid var(--cloud); vertical-align:top; color:var(--slate); }
+.rt-tbl tr:last-child td { border-bottom:none; }
+.migns { background:var(--white); border:1px solid var(--cloud); border-radius:var(--r-lg); overflow:hidden; margin-top:10px; }
+.mig-row { display:grid; grid-template-columns:130px 1fr; gap:14px; padding:11px 16px; border-bottom:1px solid var(--cloud); align-items:start; }
+.mig-row:last-child { border-bottom:none; }
+.mig-label { font-family:var(--mono); font-size:11px; font-weight:500; }
+.mig-body { font-size:12px; color:var(--slate); line-height:1.5; }
+footer { background:var(--ink); padding:40px; text-align:center; font-family:var(--mono); font-size:11px; color:rgba(255,255,255,0.2); letter-spacing:0.05em; }
+footer strong { color:rgba(255,255,255,0.55); }
+@media (max-width:900px){ .schema-grid,.ef-grid,.tabs-grid{ grid-template-columns:1fr; } .info-grid{ grid-template-columns:1fr; } nav,.hero,.s{ padding-left:20px; padding-right:20px; } }
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-logo">Hearth <em>/</em> Architecture v2</div>
+  <ul class="nav-links">
+    <li><a href="#thesis">Thesis</a></li>
+    <li><a href="#tabs">5 Tabs</a></li>
+    <li><a href="#recipe-model">Recipe Model</a></li>
+    <li><a href="#arch">Stack</a></li>
+    <li><a href="#db">Database</a></li>
+    <li><a href="#ef">Edge Fns</a></li>
+    <li><a href="#ai">AI</a></li>
+    <li><a href="#stories">Stories</a></li>
+    <li><a href="#migration">Migration</a></li>
+  </ul>
+</nav>
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-tag">Technical Specification &middot; v2.0 &middot; Content-First Pivot</div>
+    <h1 class="hero-title">Hearth<br><em>System Architecture v2</em></h1>
+    <p class="hero-sub">The content-first rebuild. Hearth is now a recipe discovery app with a smart pantry underneath &mdash; an image-based reels feed of Hearth&rsquo;s own recipes, an Explore page, an AI cook-assistant, a pantry &amp; shopping list, and a profile with collections. Three recipe origins with a hard public/private permission boundary. This document supersedes v1.</p>
+    <div class="hero-pills">
+      <span class="hero-pill">React Native / Expo</span>
+      <span class="hero-pill">5-tab nav + center AI button</span>
+      <span class="hero-pill">Image reels feed + likes</span>
+      <span class="hero-pill">Supabase + RevenueCat</span>
+      <span class="hero-pill">Cloudflare R2 (images)</span>
+      <span class="hero-pill">expo-notifications (local)</span>
+      <span class="hero-pill">3 recipe origins</span>
+      <span class="hero-pill">No video hosting</span>
+    </div>
+  </div>
+</div>
+<hr class="div">
+
+<section class="s" id="thesis">
+  <div class="s-eye">00 &middot; What Changed &amp; Why</div>
+  <h2 class="s-title">From kitchen utility to<br>recipe app with a smart pantry.</h2>
+  <p class="s-lead">v1 Hearth was pantry-first: scan receipt &rarr; Panic Button &rarr; cook. v2 Hearth is content-first: a feed of beautiful recipes is the front door, and the pantry/AI/waste features make cooking them effortless. The core food-waste engine survives underneath &mdash; it&rsquo;s just no longer the first thing users see.</p>
+
+  <div class="info-box">
+    <div class="info-lbl">The two principles that still govern everything</div>
+    <div class="info-grid">
+      <div><strong>1. The user never manually logs consumption</strong>Receipt OCR sets quantities at purchase. Cooking a recipe auto-deducts via a Postgres trigger. The pantry maintains itself. This survives the pivot unchanged and still rules the data model.</div>
+      <div><strong>2. Recipe origin is a permission boundary, not a label</strong>New in v2. Every recipe has an origin: hearth_featured, community, or user_import. The first two can be public; user_import is private forever, barred at the database (RLS) level. This is what keeps link-importing legal as the app scales.</div>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <div class="info-lbl">Stack changes from v1 &rarr; v2</div>
+    <div class="info-grid">
+      <div><strong>Dropped: OneSignal</strong>Replaced by expo-notifications (on-device local scheduling). Reminders fire on any day/time the user picks, scheduled locally. One fewer service, works offline.</div>
+      <div><strong>Dropped: Branch.io + Upstash</strong>Creator affiliate links deferred (didn&rsquo;t fit content-first model). Upstash cron replaced by Supabase pg_cron where any server scheduling is needed.</div>
+      <div><strong>Added: Cloudflare R2 as image CDN</strong>The feed is images, not video &mdash; cheap to host, fully controlled, no per-minute streaming cost. No Mux, no video infrastructure.</div>
+      <div><strong>Whisper: demoted to optional</strong>Only used inside the private link-import flow to transcribe a video with no written recipe. Not in the core path. The main feed is text+image recipes with no transcription needed.</div>
+      <div><strong>Kept: Supabase</strong>DB, Auth, Storage, Realtime, Edge Functions, pg_cron. The spine. Non-negotiable.</div>
+      <div><strong>Kept: RevenueCat</strong>Native IAP for subscriptions. Removing it means hand-rolling StoreKit + Play Billing &mdash; more work, not less. Stays.</div>
+    </div>
+  </div>
+</section>
+<hr class="div">
+
+<section class="s" id="tabs">
+  <div class="s-eye">01 &middot; The Five Tabs</div>
+  <h2 class="s-title">Navigation: 4 tabs + a center AI button.</h2>
+  <p class="s-lead">The bottom bar has four standard tabs plus a prominent center button (Creme-style) that opens the AI cook-assistant as a full screen. Home is the front door &mdash; an image reels feed of Hearth recipes.</p>
+
+  <div class="tabs-grid">
+    <div class="tab-card">
+      <div class="tab-num">TAB 1</div>
+      <div class="tab-name">Home</div>
+      <div class="tab-desc">Vertical reels-style scroll through image recipe cards (Hearth-featured now, +community later). Like button on each. Tap a card &rarr; Recipe Detail with ingredients, steps, time, nutrition, pantry-match, and &ldquo;cook this&rdquo;.</div>
+    </div>
+    <div class="tab-card">
+      <div class="tab-num">TAB 2</div>
+      <div class="tab-name">Explore</div>
+      <div class="tab-desc">Recommended-for-you, theme filters (Asian, Italian&hellip;), search bar, and a &ldquo;Cook from your pantry&rdquo; row that matches Hearth recipes to what the user has. Pantry matching is deterministic &mdash; no AI needed.</div>
+    </div>
+    <div class="tab-card center">
+      <div class="tab-num">CENTER</div>
+      <div class="tab-name">AI &#10024;</div>
+      <div class="tab-desc">Prominent center button. Opens the AI cook-assistant. v1 ships the one-shot &ldquo;I&rsquo;m exhausted&rdquo; button (pantry in &rarr; one recipe out). v2 adds conversational chat later. Allergens are hard constraints.</div>
+    </div>
+    <div class="tab-card">
+      <div class="tab-num">TAB 4</div>
+      <div class="tab-name">Pantry &amp; List</div>
+      <div class="tab-desc">Two sub-tabs. Pantry: items from onboarding, OCR, manual add. Shopping List: AI suggests low-stock items at the top as a confirm-to-add row &mdash; user must approve, nothing auto-added silently.</div>
+    </div>
+    <div class="tab-card">
+      <div class="tab-num">TAB 5</div>
+      <div class="tab-name">Profile</div>
+      <div class="tab-desc">Collections (saved recipes + private imports, two sub-tabs), plus custom recipe upload. Settings: name, avatar, household sharing, subscription, allergies, stats, flexible reminder day/time.</div>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <div class="info-lbl">Key navigation decisions</div>
+    <div class="info-grid">
+      <div><strong>The old Panic Button moved</strong>In v1 it lived on the Home screen. It is now the center AI tab&rsquo;s one-shot mode. The logic you already built transfers almost directly &mdash; it just lives behind the center button now.</div>
+      <div><strong>Saved recipes moved to Profile</strong>The old Explore/Saved tab is split: discovery (recommended/themes/search) is the new Explore; saved + imported recipes live in Profile &rarr; Collections.</div>
+      <div><strong>Cook-from-pantry needs no AI</strong>It&rsquo;s the existing pantry_match_pct logic pointed at Hearth&rsquo;s recipe library instead of imports. Deterministic, cheap, instant.</div>
+      <div><strong>Center button is a modal route</strong>Not a flat tab &mdash; it opens the AI assistant as a presented full-screen route so it feels like an action, matching the Creme reference.</div>
+    </div>
+  </div>
+</section>
+<hr class="div">
+
+<section class="s" id="recipe-model">
+  <div class="s-eye">02 &middot; The Recipe Origin Model</div>
+  <h2 class="s-title">Three origins. Two permission classes.<br>One legal boundary.</h2>
+  <p class="s-lead">This is the most important new concept in v2. Every recipe has an origin that determines who can see it and whether it can ever go public. The boundary is enforced in Row Level Security &mdash; not just hidden in the UI &mdash; because it is what keeps link-importing legally defensible as Hearth scales.</p>
+
+  <div class="migns">
+    <div class="mig-row" style="background:var(--paper)">
+      <div class="mig-label" style="color:var(--ember)">ORIGIN</div>
+      <div class="mig-body" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;font-weight:600;color:var(--ink)"><div>Created by</div><div>Visible to</div><div>Can go public?</div></div>
+    </div>
+    <div class="mig-row">
+      <div class="mig-label" style="color:var(--green)">hearth_featured</div>
+      <div class="mig-body" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px"><div>Hearth / hired cooks</div><div>Everyone (home feed)</div><div style="color:var(--green);font-weight:600">Yes &mdash; it is the feed</div></div>
+    </div>
+    <div class="mig-row">
+      <div class="mig-label" style="color:var(--blue)">community</div>
+      <div class="mig-body" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px"><div>A user, original work</div><div>Self now; everyone Phase 2</div><div style="color:var(--green);font-weight:600">Yes &mdash; their own work</div></div>
+    </div>
+    <div class="mig-row">
+      <div class="mig-label" style="color:var(--red)">user_import</div>
+      <div class="mig-body" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px"><div>Extracted from a link</div><div>Only the importer, forever</div><div style="color:var(--red);font-weight:600">No &mdash; hard-barred by RLS</div></div>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <div class="info-lbl">Why this boundary exists (the legal logic)</div>
+    <div class="info-grid">
+      <div><strong>Recipes (facts) aren&rsquo;t copyrightable</strong>A list of ingredients and functional steps is not protected. Extracting those facts from a video into a text card is the defensible core of what Flavorish-style import does.</div>
+      <div><strong>Expression is protected</strong>The original video, photography, and exact prose are protected. So Hearth extracts facts (ingredients, steps, nutrition) but never rehosts the source video or copies its wording verbatim.</div>
+      <div><strong>Private + user-initiated keeps it personal</strong>One user importing their own link for their own private collection is transformative and personal. Promoting that to a public feed would turn it into republishing &mdash; which is why user_import can never go public.</div>
+      <div><strong>Platform ToS is a separate risk</strong>Pulling media off TikTok/IG may violate their terms regardless of copyright. So link-import is a secondary convenience, never a load-bearing pillar, and stays private and small.</div>
+    </div>
+  </div>
+
+  <div class="info-box" style="border-color:rgba(184,50,50,0.25)">
+    <div class="info-lbl" style="color:var(--red)">Hard rule enforced in RLS &amp; AGENTS.md</div>
+    <div style="font-size:12px;color:var(--slate);line-height:1.6">
+      A recipe with <code style="font-family:var(--mono);color:var(--red)">origin = 'user_import'</code> can <strong style="color:var(--ink)">never</strong> appear on the public feed, in Explore, in another user&rsquo;s view, or be promoted to community. The RLS SELECT policy on the feed query structurally excludes it. This is not a UI toggle &mdash; it is a database-level guarantee. Any code path that would surface an imported recipe publicly is a critical defect. This single rule is what keeps the import feature defensible. <strong style="color:var(--ink)">Not legal advice &mdash; consult an IP lawyer in-market before monetizing at scale.</strong>
+    </div>
+  </div>
+</section>
+<hr class="div">
+
+<section class="s" id="arch">
+  <div class="s-eye">03 &middot; The Stack (Slimmed)</div>
+  <h2 class="s-title">Fewer services. Same spine.</h2>
+  <p class="s-lead">The pivot let us remove three services. All AI keys remain server-side only, inside Edge Functions. The feed is images on R2 &mdash; no video infrastructure anywhere.</p>
+
+  <div class="diagram">
+    <div class="d-layer">
+      <div class="d-layer-lbl">Client &mdash; React Native / Expo (iOS + Android)</div>
+      <div class="d-nodes">
+        <div class="d-node dn-dark"><div class="dn-name">Mobile App</div><div class="dn-note">RN &middot; NativeWind &middot; Reanimated 3 &middot; 5-tab nav</div></div>
+        <div class="d-node dn-dark"><div class="dn-name">Image Reels Feed</div><div class="dn-note">Vertical scroll &middot; FlashList &middot; like gestures</div></div>
+        <div class="d-node dn-dark"><div class="dn-name">expo-notifications</div><div class="dn-note">On-device local reminders &middot; any day/time</div></div>
+      </div>
+    </div>
+    <div class="d-arrow">&darr; Supabase JS SDK &middot; HTTPS &middot; WebSocket (Realtime)</div>
+    <div class="d-layer">
+      <div class="d-layer-lbl">Backend &mdash; Supabase</div>
+      <div class="d-nodes">
+        <div class="d-node dn-infra"><div class="dn-name">Auth</div><div class="dn-note">Email/magic link &middot; Apple &middot; Google</div></div>
+        <div class="d-node dn-infra"><div class="dn-name">PostgREST</div><div class="dn-note">Auto REST &middot; RLS enforced</div></div>
+        <div class="d-node dn-infra"><div class="dn-name">Realtime</div><div class="dn-note">Pantry sync &middot; tier unlock &middot; likes</div></div>
+        <div class="d-node dn-infra"><div class="dn-name">Edge Functions</div><div class="dn-note">Deno &middot; all AI &middot; import &middot; OCR</div></div>
+        <div class="d-node dn-infra"><div class="dn-name">pg_cron</div><div class="dn-note">Any server scheduling (replaces Upstash)</div></div>
+      </div>
+    </div>
+    <div class="d-arrow">&darr; Edge Functions call AI &mdash; keys are server-side env vars only</div>
+    <div class="d-layer">
+      <div class="d-layer-lbl">AI &amp; External Services</div>
+      <div class="d-nodes">
+        <div class="d-node dn-ai"><div class="dn-name">GPT-4o-mini</div><div class="dn-note">&ldquo;I&rsquo;m exhausted&rdquo; &middot; import structuring &middot; tags</div></div>
+        <div class="d-node dn-ai"><div class="dn-name">Google Vision</div><div class="dn-note">Receipt OCR only</div></div>
+        <div class="d-node dn-ai"><div class="dn-name">Whisper</div><div class="dn-note">Optional &middot; link-import audio only</div></div>
+        <div class="d-node dn-ai"><div class="dn-name">GPT-4o</div><div class="dn-note">Conversational AI (Phase 2) &middot; Plus</div></div>
+      </div>
+    </div>
+    <div class="d-arrow">&darr; Media, payments, observability</div>
+    <div class="d-layer">
+      <div class="d-layer-lbl">Infrastructure</div>
+      <div class="d-nodes">
+        <div class="d-node dn-growth"><div class="dn-name">Cloudflare R2</div><div class="dn-note">Recipe images &middot; avatars &middot; cheap, controlled</div></div>
+        <div class="d-node dn-pay"><div class="dn-name">RevenueCat</div><div class="dn-note">Native IAP &middot; Apple + Google</div></div>
+        <div class="d-node dn-growth"><div class="dn-name">Resend</div><div class="dn-note">Welcome &middot; password reset email</div></div>
+        <div class="d-node dn-growth"><div class="dn-name">Sentry + PostHog</div><div class="dn-note">Errors &middot; analytics (add when convenient)</div></div>
+        <div class="d-node dn-data"><div class="dn-name">Open Food Facts</div><div class="dn-note">Nutrition data &middot; free API</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="info-box">
+    <div class="info-lbl">Removed vs v1 &mdash; do not reinstall these</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <span class="tag t-drop">OneSignal &rarr; expo-notifications</span>
+      <span class="tag t-drop">Branch.io &rarr; deferred</span>
+      <span class="tag t-drop">Upstash Redis &rarr; pg_cron</span>
+      <span class="tag t-drop">Video hosting &rarr; R2 images</span>
+      <span class="tag t-drop">Whisper in core path &rarr; import-only</span>
+    </div>
+  </div>
+</section>
+<hr class="div">
+
+<section class="s" id="db">
+  <div class="s-eye">04 &middot; Database Schema</div>
+  <h2 class="s-title">14 tables. The new ones are starred.</h2>
+  <p class="s-lead">Most of v1&rsquo;s schema survives. New for v2: the origin column on recipes, plus likes, recipe_steps (with timestamps for the Creme-style step view), and collections. <span style="font-family:var(--mono);color:var(--amber);font-size:12px">PK</span> primary key &middot; <span style="font-family:var(--mono);color:var(--purple);font-size:12px">FK</span> foreign key.</p>
+
+  <div class="schema-grid">
+    <div class="db-table">
+      <div class="db-head"><span class="db-head-name">recipes &#9733;</span><span class="db-head-tag">origin model</span></div>
+      <div class="db-field"><span class="db-fn pk">id</span><span class="db-ft">uuid</span><span class="db-fd">PK</span></div>
+      <div class="db-field"><span class="db-fn" style="color:var(--red)">origin</span><span class="db-ft">text</span><span class="db-fd">hearth_featured | community | user_import &mdash; drives RLS</span></div>
+      <div class="db-field"><span class="db-fn">status</span><span class="db-ft">text</span><span class="db-fd">draft | review | published (featured needs review before publish)</span></div>
+      <div class="db-field"><span class="db-fn fk">created_by</span><span class="db-ft">uuid</span><span class="db-fd">FK &rarr; users &middot; null for hearth system</span></div>
+      <div class="db-field"><span class="db-fn">title</span><span class="db-ft">text</span><span class="db-fd">Recipe name</span></div>
+      <div class="db-field"><span class="db-fn">description</span><span class="db-ft">text</span><span class="db-fd">Short blurb for feed card</span></div>
+      <div class="db-field"><span class="db-fn">hero_image_url</span><span class="db-ft">text</span><span class="db-fd">R2 URL &middot; the feed image</span></div>
+      <div class="db-field"><span class="db-fn">cuisine_theme</span><span class="db-ft">text</span><span class="db-fd">asian | italian | mexican&hellip; for Explore filters</span></div>
+      <div class="db-field"><span class="db-fn">cook_time_mins</span><span class="db-ft">int</span><span class="db-fd">Total time</span></div>
+      <div class="db-field"><span class="db-fn">difficulty</span><span class="db-ft">text</span><span class="db-fd">easy | medium | hard</span></div>
+      <div class="db-field"><span class="db-fn">servings</span><span class="db-ft">int</span><span class="db-fd">Default serving count</span></div>
+      <div class="db-field"><span class="db-fn">nutrition</span><span class="db-ft">jsonb</span><span class="db-fd">{calories, protein_g, carbs_g, fat_g} per serving</span></div>
+      <div class="db-field"><span class="db-fn">source_url</span><span class="db-ft">text</span><span class="db-fd">Original link &middot; user_import only &middot; null otherwise</span></div>
+      <div class="db-field"><span class="db-fn">like_count</span><span class="db-ft">int</span><span class="db-fd">Denormalised &middot; ranking signal</span></div>
+    </div>
+
+    <div class="db-table">
+      <div class="db-head"><span class="db-head-name">recipe_steps &#9733;</span><span class="db-head-tag">Creme-style step view</span></div>
+      <div class="db-field"><span class="db-fn pk">id</span><span class="db-ft">uuid</span><span class="db-fd">PK</span></div>
+      <div class="db-field"><span class="db-fn fk">recipe_id</span><span class="db-ft">uuid</span><span class="db-fd">FK &rarr; recipes</span></div>
+      <div class="db-field"><span class="db-fn">step_number</span><span class="db-ft">int</span><span class="db-fd">Order</span></div>
+      <div class="db-field"><span class="db-fn">instruction</span><span class="db-ft">text</span><span class="db-fd">Step text</span></div>
+      <div class="db-field"><span class="db-fn">step_image_url</span><span class="db-ft">text</span><span class="db-fd">R2 URL &middot; optional per-step image</span></div>
+      <div class="db-field"><span class="db-fn">timer_seconds</span><span class="db-ft">int</span><span class="db-fd">Optional inline timer (e.g. 8h rise)</span></div>
+      <div class="db-field"><span class="db-fn">video_timestamp</span><span class="db-ft">int</span><span class="db-fd">Optional &middot; seconds into source video for this step</span></div>
+    </div>
+
+    <div class="db-table">
+      <div class="db-head"><span class="db-head-name">recipe_ingredients</span><span class="db-head-tag">junction</span></div>
+      <div class="db-field"><span class="db-fn pk">id</span><span class="db-ft">uuid</span><span class="db-fd">PK</span></div>
+      <div class="db-field"><span class="db-fn fk">recipe_id</span><span class="db-ft">uuid</span><span class="db-fd">FK &rarr; recipes</span></div>
+      <div class="db-field"><span class="db-fn fk">ingredient_id</span><span class="db-ft">int</span><span class="db-fd">FK &rarr; ingredients &middot; canonical (null if unmapped import)</span></div>
+      <div class="db-field"><span class="db-fn">raw_text</span><span class="db-ft">text</span><span class="db-fd">Original text for imports that didn&rsquo;t map cleanly</span></div>
+      <div class="db-field"><span class="db-fn">quantity</span><span class="db-ft">numeric</span><span class="db-fd">For 1 serving</span></div>
+      <div class="db-field"><span class="db-fn">unit</span><span class="db-ft">text</span><span class="db-fd">ml | g | count | tbsp&hellip;</span></div>
+      <div class="db-field"><span class="db-fn">is_optional</span><span class="db-ft">bool</span><span class="db-fd">Excluded from pantry match</span></div>
+    </div>
+
+    <div class="db-table">
+      <div class="db-head"><span class="db-head-name">likes &#9733;</span><span class="db-head-tag">feed engagement</span></div>
+      <div class="db-field"><span class="db-fn pk">id</span><span class="db-ft">uuid</span><span class="db-fd">PK</span></div>
+      <div class="db-field"><span class="db-fn fk">user_id</span><span class="db-ft">uuid</span><span class="db-fd">FK &rarr; users</span></div>
+      <div class="db-field"><span class="db-fn fk">recipe_id</span><span class="db-ft">uuid</span><span class="db-fd">FK &rarr; recipes</span></div>
+      <div class="db-field"><span class="db-fn">created_at</span><span class="db-ft">timestamptz</span><span class="db-fd">Unique (user_id, recipe_id) &mdash; one like each</span></div>
+    </div>
+
+    <div class="db-table">
+      <div class="db-head"><span class="db-head-name">collections &#9733;</span><span class="db-head-tag">saved + imported</span></div>
+      <div class="db-field"><span class="db-fn pk">id</span><span class="db-ft">uuid</span><span class="db-fd">PK</span></div>
+      <div class="db-field"><span class="db-fn fk">user_id</span><span class="db-ft">uuid</span><span class="db-fd">FK &rarr; users</span></div>
+      <div class="db-field"><span class="db-fn fk">recipe_id</span><span class="db-ft">uuid</span><span class="db-fd">FK &rarr; recipes</span></div>
+      <div class="db-field"><span class="db-fn">collection_type</span><span class="db-ft">text</span><span class="db-fd">saved | imported &mdash; the two Profile sub-tabs</span></div>
+      <div class="db-field"><span class="db-fn">pantry_match_pct</span><span class="db-ft">numeric</span><span class="db-fd">Recomputed on pantry change</span></div>
+      <div class="db-field"><span class="db-fn">saved_at</span><span class="db-ft">timestamptz</span><span class="db-fd">Auto</span></div>
+    </div>
+
+    <div class="db-table">
+      <div class="db-head"><span class="db-head-name">pantry_items</span><span class="db-head-tag">survives from v1</span></div>
+      <div class="db-field"><span class="db-fn pk">id</span><span class="db-ft">uuid</span><span class="db-fd">PK</span></div>
+      <div class="db-field"><span class="db-fn fk">user_id</span><span class="db-ft">uuid</span><span class="db-fd">FK &rarr; users &middot; RLS</span></div>
+      <div class="db-field"><span class="db-fn fk">household_id</span><span class="db-ft">uuid</span><span class="db-fd">FK &middot; nullable</span></div>
+      <div class="db-field"><span class="db-fn fk">ingredient_id</span><span class="db-ft">int</span><span class="db-fd">FK &rarr; ingredients</span></div>
+      <div class="db-field"><span class="db-fn">quantity</span><span class="db-ft">numeric</span><span class="db-fd">In default_unit</span></div>
+      <div class="db-field"><span class="db-fn">expires_at</span><span class="db-ft">date</span><span class="db-fd">Receipt or default shelf life</span></div>
+      <div class="db-field"><span class="db-fn">is_red_zone</span><span class="db-ft">bool</span><span class="db-fd">expires within 2 days</span></div>
+      <div class="db-field"><span class="db-fn">status</span><span class="db-ft">text</span><span class="db-fd">active | used | expired | removed</span></div>
+    </div>
+
+    <div class="db-table">
+      <div class="db-head"><span class="db-head-name">ingredients</span><span class="db-head-tag">canonical &middot; v1</span></div>
+      <div class="db-field"><span class="db-fn pk">id</span><span class="db-ft">int</span><span class="db-fd">PK</span></div>
+      <div class="db-field"><span class="db-fn">name</span><span class="db-ft">text</span><span class="db-fd">canonical lowercase</span></div>
+      <div class="db-field"><span class="db-fn">category</span><span class="db-ft">text</span><span class="db-fd">9 categories</span></div>
+      <div class="db-field"><span class="db-fn">default_unit</span><span class="db-ft">text</span><span class="db-fd">ml | g | count</span></div>
+      <div class="db-field"><span class="db-fn">shopping_unit</span><span class="db-ft">text</span><span class="db-fd">bottle | pack&hellip;</span></div>
+      <div class="db-field"><span class="db-fn">default_shelf_life_days</span><span class="db-ft">int</span><span class="db-fd">Expiry estimate</span></div>
+      <div class="db-field"><span class="db-fn">aliases</span><span class="db-ft">text[]</span><span class="db-fd">OCR + import matching</span></div>
+    </div>
+
+    <div class="db-table">
+      <div class="db-head"><span class="db-head-name">shopping_list_items</span><span class="db-head-tag">v1 + AI suggest</span></div>
+      <div class="db-field"><span class="db-fn pk">id</span><span class="db-ft">uuid</span><span class="db-fd">PK</span></div>
+      <div class="db-field"><span class="db-fn fk">user_id</span><span class="db-ft">uuid</span><span class="db-fd">FK &rarr; users</span></div>
+      <div class="db-field"><span class="db-fn fk">ingredient_id</span><span class="db-ft">int</span><span class="db-fd">FK &middot; canonical</span></div>
+      <div class="db-field"><span class="db-fn">source</span><span class="db-ft">text</span><span class="db-fd">ai_suggested | recipe_missing | manual</span></div>
+      <div class="db-field"><span class="db-fn">is_confirmed</span><span class="db-ft">bool</span><span class="db-fd">AI suggestions start false &mdash; user confirms to add</span></div>
+      <div class="db-field"><span class="db-fn">is_checked</span><span class="db-ft">bool</span><span class="db-fd">Ticked as bought</span></div>
+    </div>
+
+    <div class="db-table">
+      <div class="db-head"><span class="db-head-name">cook_logs</span><span class="db-head-tag">triggers deduction &middot; v1</span></div>
+      <div class="db-field"><span class="db-fn pk">id</span><span class="db-ft">uuid</span><span class="db-fd">PK</span></div>
+      <div class="db-field"><span class="db-fn fk">user_id</span><span class="db-ft">uuid</span><span class="db-fd">FK &rarr; users</span></div>
+      <div class="db-field"><span class="db-fn fk">recipe_id</span><span class="db-ft">uuid</span><span class="db-fd">FK &rarr; recipes</span></div>
+      <div class="db-field"><span class="db-fn">servings_cooked</span><span class="db-ft">int</span><span class="db-fd">Scales deduction</span></div>
+      <div class="db-field"><span class="db-fn">items_rescued</span><span class="db-ft">int</span><span class="db-fd">Red Zone items used &middot; honest metric</span></div>
+      <div class="db-field"><span class="db-fn">cooked_at</span><span class="db-ft">timestamptz</span><span class="db-fd">Auto</span></div>
+    </div>
+
+    <div class="db-table">
+      <div class="db-head"><span class="db-head-name">users</span><span class="db-head-tag">v1 + reminder prefs</span></div>
+      <div class="db-field"><span class="db-fn pk">id</span><span class="db-ft">uuid</span><span class="db-fd">PK &middot; auth.users</span></div>
+      <div class="db-field"><span class="db-fn">display_name</span><span class="db-ft">text</span><span class="db-fd">Editable</span></div>
+      <div class="db-field"><span class="db-fn">avatar_url</span><span class="db-ft">text</span><span class="db-fd">R2</span></div>
+      <div class="db-field"><span class="db-fn">dietary_profile</span><span class="db-ft">jsonb</span><span class="db-fd">{allergens, restrictions, cuisine_prefs}</span></div>
+      <div class="db-field"><span class="db-fn">subscription_tier</span><span class="db-ft">text</span><span class="db-fd">free | plus | family</span></div>
+      <div class="db-field"><span class="db-fn">reminder_prefs</span><span class="db-ft">jsonb</span><span class="db-fd">{enabled, day_of_week, time} &mdash; local notif schedule</span></div>
+      <div class="db-field"><span class="db-fn fk">household_id</span><span class="db-ft">uuid</span><span class="db-fd">FK &middot; nullable</span></div>
+    </div>
+
+    <div class="db-table">
+      <div class="db-head"><span class="db-head-name">households</span><span class="db-head-tag">Family tier &middot; v1</span></div>
+      <div class="db-field"><span class="db-fn pk">id</span><span class="db-ft">uuid</span><span class="db-fd">PK</span></div>
+      <div class="db-field"><span class="db-fn fk">owner_id</span><span class="db-ft">uuid</span><span class="db-fd">FK</span></div>
+      <div class="db-field"><span class="db-fn">invite_code</span><span class="db-ft">text</span><span class="db-fd">6-char unique</span></div>
+      <div class="db-field"><span class="db-fn">member_limit</span><span class="db-ft">int</span><span class="db-fd">5</span></div>
+    </div>
+
+    <div class="db-table">
+      <div class="db-head"><span class="db-head-name">pantry_archetypes</span><span class="db-head-tag">onboarding &middot; v1</span></div>
+      <div class="db-field"><span class="db-fn pk">id</span><span class="db-ft">int</span><span class="db-fd">PK</span></div>
+      <div class="db-field"><span class="db-fn">name</span><span class="db-ft">text</span><span class="db-fd">Cooking style</span></div>
+      <div class="db-field"><span class="db-fn">ingredient_seeds</span><span class="db-ft">jsonb</span><span class="db-fd">Seed items</span></div>
+    </div>
+
+    <div class="db-table">
+      <div class="db-head"><span class="db-head-name">waste_analytics</span><span class="db-head-tag">deferred display</span></div>
+      <div class="db-field"><span class="db-fn pk">id</span><span class="db-ft">uuid</span><span class="db-fd">PK</span></div>
+      <div class="db-field"><span class="db-fn fk">user_id</span><span class="db-ft">uuid</span><span class="db-fd">FK</span></div>
+      <div class="db-field"><span class="db-fn">items_rescued</span><span class="db-ft">int</span><span class="db-fd">Keep counting even though screen deferred</span></div>
+      <div class="db-field"><span class="db-fn">period_month</span><span class="db-ft">date</span><span class="db-fd">Monthly</span></div>
+    </div>
+
+    <div class="db-table">
+      <div class="db-head"><span class="db-head-name">import_jobs &#9733;</span><span class="db-head-tag">link import status</span></div>
+      <div class="db-field"><span class="db-fn pk">id</span><span class="db-ft">uuid</span><span class="db-fd">PK</span></div>
+      <div class="db-field"><span class="db-fn fk">user_id</span><span class="db-ft">uuid</span><span class="db-fd">FK &rarr; users</span></div>
+      <div class="db-field"><span class="db-fn">source_url</span><span class="db-ft">text</span><span class="db-fd">Pasted link</span></div>
+      <div class="db-field"><span class="db-fn">status</span><span class="db-ft">text</span><span class="db-fd">queued | processing | done | failed</span></div>
+      <div class="db-field"><span class="db-fn fk">result_recipe_id</span><span class="db-ft">uuid</span><span class="db-fd">FK &rarr; recipes &middot; null until done</span></div>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <div class="info-lbl">The cook trigger still rules &mdash; now across origins</div>
+    <div style="font-size:12px;color:var(--slate);line-height:1.6">cook_logs INSERT &rarr; Postgres trigger &rarr; deduct pantry quantities, mark depleted items used, increment items_rescued, recompute pantry_match_pct on affected collections. <strong style="color:var(--ink)">New in v2:</strong> because a cooked recipe may be hearth_featured, community, or user_import, its ingredients may include unmapped items (ingredient_id null, raw_text set). The trigger deducts only mapped ingredients and silently skips unmapped ones &mdash; never errors. Featured/community recipes are fully mapped at publish time; only messy imports carry unmapped rows.</div>
+  </div>
+</section>
+<hr class="div">
+
+<section class="s" id="ef">
+  <div class="s-eye">05 &middot; Edge Functions</div>
+  <h2 class="s-title">Server-side logic. All AI lives here.</h2>
+  <p class="s-lead">Plain reads/writes go through PostgREST with RLS. Anything touching an AI service, a secret, or multi-step logic is an Edge Function. Keys never reach the client.</p>
+  <div class="ef-grid">
+    <div class="ef-card">
+      <div class="ef-name">ai-exhausted</div>
+      <div class="ef-trigger">Center AI button &rarr; &ldquo;I&rsquo;m exhausted&rdquo;</div>
+      <div class="ef-desc">The v1 one-shot. Reads pantry, returns one cookable recipe &mdash; first tries to match an existing Hearth recipe the user can make, falls back to generating one. Never uses ingredients not in pantry; allergens are hard constraints.</div>
+      <div class="ef-step"><span class="ef-n">01</span>Fetch active pantry_items + dietary_profile</div>
+      <div class="ef-step"><span class="ef-n">02</span>Detect state: empty / sparse / expiring / general</div>
+      <div class="ef-step"><span class="ef-n">03</span>First try: query published Hearth recipes with high pantry match (deterministic, no AI cost)</div>
+      <div class="ef-step"><span class="ef-n">04</span>If a strong match exists &rarr; return that recipe (cheapest path, promotes our content)</div>
+      <div class="ef-step"><span class="ef-n">05</span>Else: GPT-4o-mini generates a recipe from pantry only, cuisine-anchored</div>
+      <div class="ef-step"><span class="ef-n">06</span>Validate every ingredient against pantry; retry once stricter if it hallucinates</div>
+      <div class="ef-step"><span class="ef-n">07</span>Validate against allergens &mdash; reject + regenerate on any violation</div>
+      <div class="ef-step"><span class="ef-n">08</span>Return recipe; if generated, save as origin=ai_generated (private to user)</div>
+    </div>
+    <div class="ef-card">
+      <div class="ef-name">import-recipe</div>
+      <div class="ef-trigger">Profile &rarr; Collections &rarr; paste link (private only)</div>
+      <div class="ef-desc">The Flavorish-style import. Extracts ingredients, steps, and nutrition from a pasted YT/IG/TikTok link into a private recipe card. Result is always origin=user_import &mdash; barred from public surfaces. Whisper only if no written recipe exists.</div>
+      <div class="ef-step"><span class="ef-n">01</span>Create import_job (status=queued), return immediately so UI can show progress</div>
+      <div class="ef-step"><span class="ef-n">02</span>Caption/description layer: GPT-4o-mini tries to extract from available text first</div>
+      <div class="ef-step"><span class="ef-n">03</span>If incomplete and audio is available: Whisper transcribes &rarr; GPT structures it</div>
+      <div class="ef-step"><span class="ef-n">04</span>Extract ingredients + steps + nutrition estimate into structured JSON</div>
+      <div class="ef-step"><span class="ef-n">05</span>Map ingredients to canonical IDs; keep raw_text for any that don&rsquo;t map</div>
+      <div class="ef-step"><span class="ef-n">06</span>INSERT recipe with origin=user_import, created_by=user, source_url set</div>
+      <div class="ef-step"><span class="ef-n">07</span>Add to collections (type=imported); compute pantry_match_pct</div>
+      <div class="ef-step"><span class="ef-n">08</span>Update import_job (status=done); never rehost source media, store facts only</div>
+    </div>
+    <div class="ef-card">
+      <div class="ef-name">ocr-receipt</div>
+      <div class="ef-trigger">Pantry tab &rarr; scan receipt (survives from v1)</div>
+      <div class="ef-desc">Unchanged from v1. Google Vision OCR &rarr; brand strip &rarr; canonical map &rarr; user confirms &rarr; batch insert to pantry. Ready-made products silently dropped.</div>
+      <div class="ef-step"><span class="ef-n">01</span>Base64 image &rarr; Google Vision DOCUMENT_TEXT_DETECTION</div>
+      <div class="ef-step"><span class="ef-n">02</span>Parse lines, strip brands, match to ingredients.aliases</div>
+      <div class="ef-step"><span class="ef-n">03</span>Unmatched / ready-made silently dropped</div>
+      <div class="ef-step"><span class="ef-n">04</span>Return parsed items for confirm screen &rarr; batch INSERT on confirm</div>
+    </div>
+    <div class="ef-card">
+      <div class="ef-name">publish-featured-recipe</div>
+      <div class="ef-trigger">Admin / creator tool &mdash; you adding launch recipes</div>
+      <div class="ef-desc">How Hearth&rsquo;s own recipes enter the feed. Takes your image + raw recipe text, AI structures it into a clean draft, you review, then publish. AI drafts &mdash; a human approves before it goes live.</div>
+      <div class="ef-step"><span class="ef-n">01</span>Upload hero image (+ optional step images) to R2</div>
+      <div class="ef-step"><span class="ef-n">02</span>GPT-4o-mini structures raw text into title, steps, ingredients, nutrition draft</div>
+      <div class="ef-step"><span class="ef-n">03</span>Map ingredients to canonical IDs</div>
+      <div class="ef-step"><span class="ef-n">04</span>INSERT recipe origin=hearth_featured, status=review</div>
+      <div class="ef-step"><span class="ef-n">05</span>You review/edit in an admin view &rarr; set status=published &rarr; appears in feed</div>
+    </div>
+    <div class="ef-card">
+      <div class="ef-name">suggest-shopping-items</div>
+      <div class="ef-trigger">Pantry &rarr; Shopping List sub-tab opens</div>
+      <div class="ef-desc">Generates the &ldquo;suggested low-stock&rdquo; row at the top of the shopping list. Deterministic where possible. Inserts as is_confirmed=false &mdash; user must approve each before it joins the real list.</div>
+      <div class="ef-step"><span class="ef-n">01</span>Find pantry items below a low-stock threshold or frequently re-bought</div>
+      <div class="ef-step"><span class="ef-n">02</span>Insert as shopping_list_items source=ai_suggested, is_confirmed=false</div>
+      <div class="ef-step"><span class="ef-n">03</span>UI shows them in a distinct &ldquo;suggested&rdquo; row; confirm flips is_confirmed=true</div>
+    </div>
+    <div class="ef-card">
+      <div class="ef-name">cook-completion-trigger</div>
+      <div class="ef-trigger">Postgres trigger on cook_logs INSERT (v1)</div>
+      <div class="ef-desc">Unchanged core. Deduct pantry, mark used, count rescued, recompute matches. Now skips unmapped ingredients gracefully for messy imports.</div>
+      <div class="ef-step"><span class="ef-n">01</span>For each mapped recipe ingredient: deduct quantity &times; servings</div>
+      <div class="ef-step"><span class="ef-n">02</span>Depleted &rarr; status=used; count Red Zone items rescued</div>
+      <div class="ef-step"><span class="ef-n">03</span>Recompute pantry_match_pct on affected collections; skip null-ingredient rows</div>
+    </div>
+  </div>
+</section>
+<hr class="div">
+
+<section class="s" id="ai">
+  <div class="s-eye">06 &middot; AI &amp; Cost Discipline</div>
+  <h2 class="s-title">Cheap by default. AI only where it earns it.</h2>
+  <p class="s-lead">The content-first model actually reduces AI load: the feed is pre-made recipes (no per-view AI), pantry matching is deterministic, and the &ldquo;I&rsquo;m exhausted&rdquo; button prefers retrieving an existing recipe over generating one.</p>
+  <div class="info-box">
+    <div class="info-lbl">Where AI fires &mdash; and where it deliberately doesn&rsquo;t</div>
+    <div class="info-grid">
+      <div><strong>Feed &amp; Explore &mdash; zero AI</strong>Recipes are pre-made and stored. Browsing, theme filters, search, and the cook-from-pantry row are plain database queries. The most-used screens cost nothing in AI.</div>
+      <div><strong>&ldquo;I&rsquo;m exhausted&rdquo; &mdash; retrieve before generate</strong>First tries to match an existing Hearth recipe (free, promotes your content). Only generates with GPT-4o-mini when nothing fits. Most taps cost nothing.</div>
+      <div><strong>Import &mdash; GPT-4o-mini, Whisper only if needed</strong>Caption text first (cheap). Whisper transcription only when there&rsquo;s no written recipe. User-initiated and occasional, so volume is naturally low.</div>
+      <div><strong>Conversational AI &mdash; Phase 2, Plus only</strong>The multi-turn chat assistant (GPT-4o) is deferred and gated to Plus when it ships. v1 ships only the one-shot button.</div>
+      <div><strong>Allergens &mdash; always validated</strong>Every AI output (exhausted button, import, generation) is cross-checked against the user&rsquo;s allergens server-side. A leak is a critical defect, logged to Sentry, regenerated.</div>
+      <div><strong>Free-tier limits</strong>&ldquo;I&rsquo;m exhausted&rdquo; generation and link imports are metered on free tier (exact numbers in business plan). Browsing the feed is always unlimited &mdash; never paywall discovery.</div>
+    </div>
+  </div>
+</section>
+<hr class="div">
+
+<section class="s" id="stories">
+  <div class="s-eye">07 &middot; Key User Stories (v2)</div>
+  <h2 class="s-title">The new core experiences.</h2>
+  <p class="s-lead">The stories that define v2. Pantry, OCR, and cook-deduction stories from v1 still apply and aren&rsquo;t repeated here &mdash; these are the new and changed ones.</p>
+
+  <div class="story">
+    <div class="story-head"><span class="story-id">US-V2-01</span><div class="story-title">Scroll the recipe feed and like recipes</div><div class="story-tags"><span class="tag t-new">New</span><span class="tag t-keep">Home</span></div></div>
+    <div class="story-body">
+      <div class="story-stmt">&ldquo;As a user opening Hearth, I want to scroll a beautiful feed of recipes like Instagram reels so I get inspired about what to cook.&rdquo;</div>
+      <span class="ac-lbl">Acceptance Criteria</span>
+      <ul class="ac-list">
+        <li>Home is a vertical, full-bleed, swipe-to-next feed of recipe image cards</li>
+        <li>Each card shows hero image, title, cuisine theme, cook time, and a like button with count</li>
+        <li>Feed shows only published recipes with origin hearth_featured (community added Phase 2)</li>
+        <li>user_import recipes never appear here &mdash; enforced by the RLS feed query, not UI filtering</li>
+        <li>Liking is optimistic, writes to likes table, increments like_count; double-tap and button both work</li>
+        <li>Tapping a card opens Recipe Detail</li>
+        <li>Feed uses FlashList for smooth scrolling; images lazy-load from R2</li>
+        <li class="edge">Empty feed (pre-launch, no recipes published): show a friendly &ldquo;new recipes coming&rdquo; state, never a blank screen</li>
+        <li class="fail">Image fails to load: show a placeholder, never a broken image icon</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="story">
+    <div class="story-head"><span class="story-id">US-V2-02</span><div class="story-title">View a recipe&rsquo;s full breakdown with step view</div><div class="story-tags"><span class="tag t-change">Changed</span><span class="tag t-keep">Recipe Detail</span></div></div>
+    <div class="story-body">
+      <div class="story-stmt">&ldquo;As a user who tapped a recipe, I want all the details &mdash; ingredients, time, nutrition, and a clear step-by-step view &mdash; so I can decide to cook it and follow along.&rdquo;</div>
+      <span class="ac-lbl">Acceptance Criteria</span>
+      <ul class="ac-list">
+        <li>Detail shows hero image, title, cook time, difficulty, servings, nutrition per serving</li>
+        <li>Ingredients list shows have/missing state against the user&rsquo;s pantry (pantry match %)</li>
+        <li>&ldquo;Add missing to shopping list&rdquo; adds unmatched ingredients in purchase units</li>
+        <li>Step view (Creme-style): numbered steps, optional per-step image, optional inline timer</li>
+        <li>If the recipe has video_timestamps and a source video, steps can deep-link to that moment</li>
+        <li>Save to collection button (saved sub-tab); like button</li>
+        <li>&ldquo;I cooked this&rdquo; fires cook_log &rarr; trigger deducts pantry</li>
+        <li class="edge">Imported recipe with unmapped ingredients: show raw_text for those, still cookable, match % counts only mapped ones</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="story">
+    <div class="story-head"><span class="story-id">US-V2-03</span><div class="story-title">Import a recipe from a social link (private)</div><div class="story-tags"><span class="tag t-new">New</span><span class="tag t-ai">AI</span></div></div>
+    <div class="story-body">
+      <div class="story-stmt">&ldquo;As a user who saw a recipe on TikTok, I want to paste the link and get a clean recipe card with ingredients, steps, and nutrition saved privately to my collection.&rdquo;</div>
+      <span class="ac-lbl">Acceptance Criteria</span>
+      <ul class="ac-list">
+        <li>Paste a YT/IG/TikTok link in Profile &rarr; Collections &rarr; Import</li>
+        <li>Progress shown immediately via import_job (queued &rarr; processing &rarr; done)</li>
+        <li>Result has ingredients, steps, and a nutrition estimate</li>
+        <li>Result is ALWAYS origin=user_import &mdash; private to the importer, never on any public surface</li>
+        <li>Saved to Collections (imported sub-tab); pantry match computed</li>
+        <li>Hearth extracts facts only &mdash; never rehosts the source video, never copies prose verbatim</li>
+        <li>Free tier import limit enforced; upgrade prompt at limit</li>
+        <li class="edge">No written recipe + has audio: Whisper transcribes; if still nothing usable, offer manual entry</li>
+        <li class="fail">Extraction fails: import_job=failed, user sees &ldquo;couldn&rsquo;t read this one&rdquo; + manual entry option, never silent loss</li>
+        <li class="fail">Any attempt to make an imported recipe public is rejected at the database layer</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="story">
+    <div class="story-head"><span class="story-id">US-V2-04</span><div class="story-title">Upload my own original recipe</div><div class="story-tags"><span class="tag t-new">New</span><span class="tag t-keep">Community seed</span></div></div>
+    <div class="story-body">
+      <div class="story-stmt">&ldquo;As a user proud of a dish I make, I want to add my own recipe with a photo, ingredients, and steps so I can keep it and (later) share it.&rdquo;</div>
+      <span class="ac-lbl">Acceptance Criteria</span>
+      <ul class="ac-list">
+        <li>Upload flow: photo + title + ingredients + steps + optional nutrition</li>
+        <li>Ingredients map to canonical IDs (with search), enabling pantry deduction when cooked</li>
+        <li>Saved as origin=community, status=draft/private to the user in Phase 1</li>
+        <li>In Phase 2, user can publish their community recipe to the public feed (it is their own work)</li>
+        <li>This is the clean, legal sharing path &mdash; distinct from user_import which can never be shared</li>
+        <li class="edge">User skips nutrition: it&rsquo;s optional; can be AI-estimated later</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="story">
+    <div class="story-head"><span class="story-id">US-V2-05</span><div class="story-title">&ldquo;I&rsquo;m exhausted&rdquo; &mdash; one tap, one meal</div><div class="story-tags"><span class="tag t-change">Moved</span><span class="tag t-ai">AI</span></div></div>
+    <div class="story-body">
+      <div class="story-stmt">&ldquo;As an exhausted user, I want to tap the center button and be told one thing to cook from what I have, so I don&rsquo;t have to think.&rdquo;</div>
+      <span class="ac-lbl">Acceptance Criteria</span>
+      <ul class="ac-list">
+        <li>Center AI tab; &ldquo;I&rsquo;m exhausted&rdquo; is the v1 one-shot action</li>
+        <li>Prefers matching an existing Hearth recipe the user can cook now (free, promotes content)</li>
+        <li>Falls back to GPT-4o-mini generation only when nothing fits</li>
+        <li>Uses only pantry ingredients; respects allergens absolutely</li>
+        <li>Returns one recipe with ingredients, steps, time; &ldquo;I cooked this&rdquo; available</li>
+        <li>Conversational chat mode is explicitly Phase 2 &mdash; do not build it in v1</li>
+        <li class="fail">Generation hallucinates a missing ingredient: validate, retry once, then honest sparse response</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="story">
+    <div class="story-head"><span class="story-id">US-V2-06</span><div class="story-title">Shopping list with confirm-to-add AI suggestions</div><div class="story-tags"><span class="tag t-change">Changed</span><span class="tag t-keep">Pantry tab</span></div></div>
+    <div class="story-body">
+      <div class="story-stmt">&ldquo;As a user maintaining my kitchen, I want the app to suggest low-stock items to rebuy, but I decide what actually goes on my list.&rdquo;</div>
+      <span class="ac-lbl">Acceptance Criteria</span>
+      <ul class="ac-list">
+        <li>Shopping List is the second sub-tab of the Pantry tab</li>
+        <li>Suggested low-stock items appear in a distinct row at the top, marked as suggestions</li>
+        <li>Suggestions are is_confirmed=false &mdash; nothing is silently added to the real list</li>
+        <li>User taps to confirm each suggestion; only then does it join the list</li>
+        <li>Items can be added from recipe &ldquo;add missing&rdquo;, manually, or from confirmed suggestions</li>
+        <li>Checking off a bought item; auto-remove when later scanned on a receipt</li>
+        <li class="edge">No low-stock items: suggestion row hidden entirely, not shown empty</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="story">
+    <div class="story-head"><span class="story-id">US-V2-07</span><div class="story-title">Flexible cooking reminder (any day/time)</div><div class="story-tags"><span class="tag t-change">Changed</span><span class="tag t-keep">Local notif</span></div></div>
+    <div class="story-body">
+      <div class="story-stmt">&ldquo;As a user, I want to choose which day and time Hearth reminds me to plan meals, not be locked to Sunday.&rdquo;</div>
+      <span class="ac-lbl">Acceptance Criteria</span>
+      <ul class="ac-list">
+        <li>Reminder day and time are user-configurable in Profile &rarr; Settings</li>
+        <li>Scheduled on-device via expo-notifications &mdash; no server push, no OneSignal</li>
+        <li>Reminder content highlights expiring items / suggests cooking from pantry</li>
+        <li>User can disable reminders entirely</li>
+        <li>reminder_prefs persisted to users table so it survives reinstall (re-scheduled on launch)</li>
+        <li class="edge">Notification permission denied: settings explain it and deep-link to OS settings</li>
+      </ul>
+    </div>
+  </div>
+</section>
+<hr class="div">
+
+<section class="s" id="migration">
+  <div class="s-eye">08 &middot; Migration From What You Built</div>
+  <h2 class="s-title">You&rsquo;re at step 11. Here&rsquo;s what moves.</h2>
+  <p class="s-lead">You built v1 through step 11. This is the honest keep / change / drop accounting so the rebuild reuses your working code instead of throwing it away. The Claude Code prompt that executes this is in the chat.</p>
+
+  <div class="migns">
+    <div class="mig-row">
+      <div class="mig-label" style="color:var(--green)">KEEP AS-IS</div>
+      <div class="mig-body">Supabase project &middot; Auth (email/Apple/Google) &middot; onboarding + pantry archetypes &middot; ingredients canonical table &middot; pantry_items + CRUD + swipe gestures &middot; OCR receipt pipeline &middot; cook_logs + deduction trigger &middot; households table. Your entire pantry spine survives.</div>
+    </div>
+    <div class="mig-row">
+      <div class="mig-label" style="color:var(--amber)">CHANGE</div>
+      <div class="mig-body">recipes table &rarr; add origin, status, hero_image_url, cuisine_theme, nutrition, like_count &middot; split recipe steps into recipe_steps with timestamps &middot; recipe_ingredients &rarr; allow null ingredient_id + raw_text for imports &middot; the old Explore/Saved tab &rarr; becomes new Explore (discovery) + Profile/Collections (saved) &middot; the old Home (pantry-first) &rarr; becomes the image reels feed.</div>
+    </div>
+    <div class="mig-row">
+      <div class="mig-label" style="color:var(--ember)">MOVE</div>
+      <div class="mig-body">The Panic Button logic &rarr; into the center AI tab as &ldquo;I&rsquo;m exhausted&rdquo; (ai-exhausted Edge Function). The import logic (if you built any share-sheet version) &rarr; re-scope to private link-import in Collections, force origin=user_import.</div>
+    </div>
+    <div class="mig-row">
+      <div class="mig-label" style="color:var(--red)">DROP / DEFER</div>
+      <div class="mig-body">Any OneSignal code &rarr; remove, replace with expo-notifications &middot; any Branch.io / Upstash code &rarr; remove (deferred) &middot; any video-hosting assumption &rarr; not needed, images on R2 &middot; the old waste-analytics dollar value &rarr; keep counting items_rescued, drop the dollar-value display logic (was flagged as unreliable).</div>
+    </div>
+    <div class="mig-row">
+      <div class="mig-label" style="color:var(--blue)">ADD NEW</div>
+      <div class="mig-body">likes table + like UI &middot; collections table + two-sub-tab Profile &middot; recipe_steps + Creme-style step view &middot; import_jobs + link-import flow &middot; image reels feed (FlashList) &middot; 5-tab nav with center AI button &middot; custom recipe upload &middot; RLS feed query that bars user_import &middot; expo-notifications scheduling &middot; suggest-shopping-items &middot; publish-featured-recipe admin tool.</div>
+    </div>
+  </div>
+
+  <div class="info-box" style="border-color:rgba(26,122,74,0.25)">
+    <div class="info-lbl" style="color:var(--green)">The safe migration order</div>
+    <div style="font-size:12px;color:var(--slate);line-height:1.7">
+      1. Schema migration first &mdash; alter recipes, add new tables, add RLS (especially the user_import bar). 2. Strip dropped services (OneSignal/Branch/Upstash). 3. Rebuild nav as 5 tabs + center button. 4. Build the image feed + likes (Home). 5. Rebuild Recipe Detail with step view. 6. Build Explore (discovery). 7. Move Panic Button &rarr; center AI tab. 8. Build Collections + custom upload + link import. 9. Wire expo-notifications reminders. 10. Shopping list AI suggestions. <strong style="color:var(--ink)">Your pantry, OCR, and cook trigger stay untouched throughout &mdash; do not let them get rewritten.</strong>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <strong>Hearth &mdash; System Architecture v2.0</strong> &middot; Content-First Pivot &middot; Supersedes v1 &middot; Confidential<br>
+  <span style="margin-top:6px;display:block">14 tables &middot; 5-tab nav &middot; 3 recipe origins with RLS-enforced public/private boundary &middot; image reels feed &middot; 6 Edge Functions &middot; slimmed stack &middot; migration plan from step 11</span>
+</footer>
+</body>
+</html>

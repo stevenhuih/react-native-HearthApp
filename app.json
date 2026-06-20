@@ -44,7 +44,13 @@
           "photosPermission": "Hearth accesses your photos so you can pick a receipt image."
         }
       ],
-      "expo-share-intent"
+      "expo-share-intent",
+      [
+        "onesignal-expo-plugin",
+        {
+          "mode": "development"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

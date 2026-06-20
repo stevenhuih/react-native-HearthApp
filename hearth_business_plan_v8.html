@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hearth — Business Plan v8 (Content-First Pivot)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --ember:#D4522A; --ember-lt:#F2845A; --ember-dk:#8C3118;
+  --coal:#1A1612; --smoke:#2E2926; --ash:#5C5650; --warm-gray:#9E9890;
+  --cream:#F7F3EC; --cream-dk:#EFE9DE; --white:#FFFFFF; --border:#E2DACF;
+  --green:#1A7A4A; --amber:#B87A10; --red:#B83232; --blue:#1550A8; --purple:#6B3FA0;
+  --serif:'Fraunces',Georgia,serif; --sans:'Inter',system-ui,sans-serif; --mono:'IBM Plex Mono',monospace;
+  --r-sm:8px; --r-md:14px; --r-lg:22px;
+}
+html{scroll-behavior:smooth;}
+body{font-family:var(--sans);background:var(--cream);color:var(--coal);font-size:16px;line-height:1.7;-webkit-font-smoothing:antialiased;}
+nav{position:sticky;top:0;z-index:100;background:rgba(247,243,236,0.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);padding:0 40px;height:64px;display:flex;align-items:center;justify-content:space-between;}
+.nav-logo{font-family:var(--serif);font-size:20px;font-weight:600;color:var(--coal);display:flex;align-items:center;gap:8px;}
+.nav-logo .leaf{color:var(--green);}
+.nav-links{display:flex;gap:26px;list-style:none;}
+.nav-links a{font-size:12px;font-weight:500;color:var(--ash);text-decoration:none;letter-spacing:0.04em;text-transform:uppercase;transition:color .2s;}
+.nav-links a:hover{color:var(--ember);}
+.hero{padding:90px 40px 70px;max-width:1080px;margin:0 auto;}
+.version-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(212,82,42,0.1);border:1px solid rgba(212,82,42,0.2);border-radius:100px;padding:4px 12px;font-family:var(--mono);font-size:11px;color:var(--ember);letter-spacing:0.08em;margin-bottom:20px;}
+.hero-eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ember);margin-bottom:20px;}
+.hero-title{font-family:var(--serif);font-size:clamp(44px,7vw,84px);font-weight:700;line-height:1.0;margin-bottom:14px;}
+.hero-title em{font-style:italic;color:var(--ember);}
+.hero-subtitle{font-family:var(--serif);font-size:clamp(18px,2.4vw,26px);font-weight:400;font-style:italic;color:var(--ash);margin-bottom:36px;max-width:680px;line-height:1.4;}
+.hero-pills{display:flex;flex-wrap:wrap;gap:8px;}
+.hero-pill{font-family:var(--mono);font-size:11px;padding:6px 13px;border-radius:100px;background:var(--white);color:var(--ash);border:1px solid var(--border);}
+hr.div{border:none;border-top:1px solid var(--border);margin:0;}
+section{padding:64px 40px;max-width:1080px;margin:0 auto;}
+.section-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ember);margin-bottom:12px;}
+.section-title{font-family:var(--serif);font-size:clamp(28px,4vw,42px);font-weight:700;line-height:1.15;margin-bottom:18px;}
+.section-lead{font-size:16px;color:var(--ash);max-width:720px;line-height:1.7;margin-bottom:40px;}
+.new-label{display:inline-block;font-family:var(--mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;background:var(--green);color:#fff;padding:2px 7px;border-radius:100px;margin-left:6px;vertical-align:middle;}
+.prose p{font-size:16px;color:var(--smoke);line-height:1.8;margin-bottom:18px;max-width:760px;}
+.prose strong{color:var(--coal);font-weight:600;}
+.callout{background:var(--white);border:1px solid var(--border);border-radius:var(--r-lg);padding:28px 32px;margin:28px 0;border-left:4px solid var(--ember);}
+.callout-label{font-family:var(--mono);font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ember);margin-bottom:10px;}
+.callout p{font-size:15px;color:var(--smoke);line-height:1.75;margin-bottom:0;}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:32px;}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:32px;}
+.card{background:var(--white);border:1px solid var(--border);border-radius:var(--r-md);padding:24px;position:relative;}
+.card-num{font-family:var(--mono);font-size:11px;color:var(--warm-gray);letter-spacing:0.1em;margin-bottom:8px;}
+.card h3{font-family:var(--serif);font-size:18px;font-weight:700;margin-bottom:8px;color:var(--coal);}
+.card p{font-size:14px;color:var(--ash);line-height:1.6;}
+.tabcard{background:var(--white);border:1px solid var(--border);border-radius:var(--r-md);padding:20px;}
+.tabcard.center{background:var(--coal);border-color:var(--coal);}
+.tabcard.center h3,.tabcard.center .card-num{color:var(--white);} .tabcard.center p{color:rgba(255,255,255,0.6);} .tabcard.center .card-num{color:var(--ember-lt);}
+.origin-tbl{width:100%;border-collapse:collapse;margin-top:28px;background:var(--white);border:1px solid var(--border);border-radius:var(--r-md);overflow:hidden;}
+.origin-tbl th{font-family:var(--mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ash);padding:14px 18px;text-align:left;background:var(--cream-dk);border-bottom:1px solid var(--border);}
+.origin-tbl td{padding:14px 18px;border-bottom:1px solid var(--border);font-size:14px;color:var(--smoke);vertical-align:top;}
+.origin-tbl tr:last-child td{border-bottom:none;}
+.origin-tbl .o-name{font-family:var(--mono);font-size:12px;font-weight:500;}
+.yes{color:var(--green);font-weight:600;} .no{color:var(--red);font-weight:600;}
+.stack-row{display:flex;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid var(--border);}
+.stack-row:last-child{border-bottom:none;}
+.stack-verb{font-family:var(--mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;padding:4px 10px;border-radius:100px;flex-shrink:0;width:90px;text-align:center;}
+.sv-keep{background:rgba(26,122,74,0.1);color:var(--green);} .sv-drop{background:rgba(184,50,50,0.1);color:var(--red);} .sv-add{background:rgba(21,80,168,0.1);color:var(--blue);}
+.stack-row .name{font-weight:600;color:var(--coal);font-size:14px;min-width:150px;}
+.stack-row .why{font-size:13px;color:var(--ash);}
+.risk-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r-md);padding:22px;border-top:3px solid var(--amber);}
+.risk-card.high{border-top-color:var(--red);}
+.risk-card h3{font-family:var(--serif);font-size:16px;font-weight:700;margin-bottom:8px;}
+.risk-card .sev{font-family:var(--mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--warm-gray);margin-bottom:10px;}
+.risk-card p{font-size:13px;color:var(--ash);line-height:1.6;}
+.step-list{counter-reset:step;margin-top:28px;}
+.step{display:flex;gap:18px;padding:16px 0;border-bottom:1px solid var(--border);}
+.step:last-child{border-bottom:none;}
+.step-n{font-family:var(--mono);font-size:13px;color:var(--ember);font-weight:500;flex-shrink:0;width:32px;}
+.step-body h4{font-family:var(--serif);font-size:16px;font-weight:600;margin-bottom:4px;color:var(--coal);}
+.step-body p{font-size:13px;color:var(--ash);line-height:1.6;}
+footer{background:var(--coal);padding:48px 40px;text-align:center;}
+footer .f-title{font-family:var(--serif);font-size:18px;color:var(--white);margin-bottom:8px;}
+footer .f-sub{font-family:var(--mono);font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:0.04em;line-height:1.8;max-width:700px;margin:0 auto;}
+@media(max-width:860px){.grid-2,.grid-3{grid-template-columns:1fr;}nav{padding:0 18px;}.nav-links{display:none;}section,.hero{padding-left:20px;padding-right:20px;}}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">Hearth <span class="leaf">🌿</span></div>
+  <ul class="nav-links">
+    <li><a href="#pivot">The Pivot</a></li>
+    <li><a href="#product">Product</a></li>
+    <li><a href="#content">Content</a></li>
+    <li><a href="#legal">Content &amp; IP</a></li>
+    <li><a href="#stack">Stack</a></li>
+    <li><a href="#money">Revenue</a></li>
+    <li><a href="#risks">Risks</a></li>
+    <li><a href="#roadmap">Roadmap</a></li>
+  </ul>
+</nav>
+
+<div class="hero">
+  <div class="version-badge">● BUSINESS PLAN v8 · SUPERSEDES v7</div>
+  <div class="hero-eyebrow">Content-First Pivot · 2025</div>
+  <h1 class="hero-title">Hearth is now a<br><em>recipe app</em> with a<br>smart pantry.</h1>
+  <p class="hero-subtitle">The front door is a beautiful feed of recipes, not a pantry scanner. Discovery brings people in; the smart pantry and AI make cooking effortless and keep them.</p>
+  <div class="hero-pills">
+    <span class="hero-pill">Image reels feed</span>
+    <span class="hero-pill">Hearth-made recipes</span>
+    <span class="hero-pill">Scales to community</span>
+    <span class="hero-pill">Smart pantry underneath</span>
+    <span class="hero-pill">"I'm exhausted" AI</span>
+    <span class="hero-pill">Private link import</span>
+  </div>
+</div>
+
+<hr class="div">
+
+<section id="pivot">
+  <div class="section-eyebrow">01 · What Changed</div>
+  <h2 class="section-title">Why pivot from kitchen utility<br>to content-first.</h2>
+  <p class="section-lead">v7 Hearth opened to a pantry and a Panic Button. It was useful but it asked a lot before giving anything back — you had to scan a receipt before the app did anything for you. v8 leads with desire, not admin.</p>
+  <div class="prose">
+    <p>The honest problem with the old model: <strong>a pantry scanner is a chore, and chores don't pull people in.</strong> Apps people open daily lead with something pleasurable — a feed, inspiration, beauty. Kptncook, Creme, and the entire recipe-app category understand this. You scroll, you get hungry, you decide to cook. The utility comes second.</p>
+    <p>So Hearth flips. <strong>The home screen is now a vertical, reels-style feed of recipe images</strong> — Hearth's own recipes at launch, community recipes later. You scroll, tap one you like, see the full breakdown, and cook it. Underneath, everything that made v7 good still runs: the pantry tracks what you have, cooking auto-deducts it, the AI helps you decide, and waste gets prevented as a happy side effect.</p>
+    <p>This is a stronger company. Discovery is the acquisition and retention engine that the pantry-first model lacked, and it opens a path the old model never had: <strong>a community of people sharing recipes</strong>, which is a real moat and a real growth loop. The pantry becomes the thing that makes Hearth's recipe app uniquely useful — "show me recipes I can actually cook with what I have right now" — rather than the whole pitch.</p>
+  </div>
+  <div class="callout">
+    <div class="callout-label">The one-line thesis</div>
+    <p>Hearth is the recipe app that knows what's in your kitchen. Beautiful recipes bring you in; the smart pantry tells you which ones you can cook tonight; cooking them maintains itself. Inspiration on top, intelligence underneath.</p>
+  </div>
+</section>
+
+<hr class="div">
+
+<section id="product">
+  <div class="section-eyebrow">02 · The Product</div>
+  <h2 class="section-title">Five tabs.</h2>
+  <p class="section-lead">Four tabs and a prominent center AI button, in the Creme style. Home is the feed; everything else supports cooking from it.</p>
+  <div class="grid-3">
+    <div class="tabcard"><div class="card-num">TAB 1</div><h3>Home</h3><p>A reels-style scroll of recipe image cards. Like button on each. Tap to open the full recipe. Hearth's recipes now; community recipes as it scales.</p></div>
+    <div class="tabcard"><div class="card-num">TAB 2</div><h3>Explore</h3><p>Recommended-for-you, theme filters (Asian, Italian, etc.), a search bar, and a "Cook from your pantry" row matching recipes to what you already have.</p></div>
+    <div class="tabcard center"><div class="card-num">CENTER</div><h3>AI ✦</h3><p>The cook-assistant. Launches with the one-tap "I'm exhausted" — one meal from what you have. Conversational chat comes later.</p></div>
+    <div class="tabcard"><div class="card-num">TAB 4</div><h3>Pantry &amp; List</h3><p>Your pantry from onboarding, receipt scans, and manual adds. A shopping list that suggests low-stock items at the top — you confirm what gets added.</p></div>
+    <div class="tabcard"><div class="card-num">TAB 5</div><h3>Profile</h3><p>Collections (saved + imported recipes), custom recipe upload, and settings: household sharing, subscription, allergies, stats, and a reminder on any day you choose.</p></div>
+  </div>
+  <div class="callout">
+    <div class="callout-label">The detail that makes Hearth different from every other recipe app</div>
+    <p>Every recipe shows a live <strong>pantry match</strong> — "you have 7 of 9 ingredients." No other recipe app knows your kitchen, so no other recipe app can tell you what you can cook right now. That's the wedge. The feed gets people in the door; the pantry match is why they stay with Hearth instead of Pinterest.</p>
+  </div>
+</section>
+
+<hr class="div">
+
+<section id="content">
+  <div class="section-eyebrow">03 · The Content Engine</div>
+  <h2 class="section-title">Where the recipes come from.<br>This is now the hardest problem.</h2>
+  <p class="section-lead">A content-first app cannot launch with an empty feed. Honest truth: the pivot turns Hearth from a pure software problem into a software-plus-content problem, and the content is the part no code can build.</p>
+  <div class="prose">
+    <p>The launch plan is <strong>image-based recipes, not video</strong> — a decision that quietly solves three problems at once. Images are cheap to host (Cloudflare R2, near-zero cost, no streaming bills), fully controlled (the feed looks exactly how we want, like Kptncook), and — critically — <strong>something a community member can actually produce.</strong> Asking users to shoot and edit cooking videos is a bar almost nobody clears. Asking them to photograph a finished dish and write the steps is a bar motivated home cooks clear happily. Image-first is what makes community contribution realistic later.</p>
+    <p>For the launch library, the plan is to <strong>partner with cooks</strong> — hire them or get permission to feature their recipes — and produce a starting set of polished image recipes. The AI does the heavy lifting on structuring: given a photo and the raw recipe, GPT-4o-mini drafts the clean ingredients/steps/nutrition breakdown, and a human reviews before it publishes. That turns an hour of manual transcription per recipe into ten minutes of cleanup.</p>
+  </div>
+  <div class="callout">
+    <div class="callout-label">The honest risk, stated plainly</div>
+    <p>The code is now the easy part. <strong>The recipe library is the hard part, and it's the difference between this app succeeding and having a beautiful empty feed.</strong> A realistic launch needs 30–50 polished recipes before a single user arrives. This is a real, ongoing content operation — sourcing cooks, getting permission, running the AI draft, reviewing each one. Budget for it as seriously as the engineering.</p>
+  </div>
+  <div class="grid-3">
+    <div class="card"><div class="card-num">SOURCE 1</div><h3>Hearth-featured</h3><p>Recipes we create or license from partner cooks. Image + AI-drafted breakdown + human review. This is the launch feed.</p></div>
+    <div class="card"><div class="card-num">SOURCE 2</div><h3>Community <span class="new-label">Phase 2</span></h3><p>Users upload their own original recipes. Photograph the dish, write the steps. Their own work, so freely shareable. The growth loop.</p></div>
+    <div class="card"><div class="card-num">SOURCE 3</div><h3>Private imports</h3><p>Users paste a TikTok/IG/YouTube link; AI extracts a private recipe card. Theirs alone — never public. A convenience, not the feed.</p></div>
+  </div>
+</section>
+
+<hr class="div">
+
+<section id="legal">
+  <div class="section-eyebrow">04 · Content &amp; IP Policy</div>
+  <h2 class="section-title">How Hearth handles other<br>people's recipes — legally.</h2>
+  <p class="section-lead">The link-import feature (like Flavorish) is genuinely useful but lives in a legal grey zone. Hearth's architecture is built to stay on the defensible side of it. This section states the rules plainly so partners, cooks, and any future investor can see they were thought through.</p>
+
+  <table class="origin-tbl">
+    <thead><tr><th>Recipe origin</th><th>Who made it</th><th>Who sees it</th><th>Can it go public?</th></tr></thead>
+    <tbody>
+      <tr><td class="o-name" style="color:var(--green)">hearth_featured</td><td>Hearth / partner cooks</td><td>Everyone — the feed</td><td class="yes">Yes — it's ours</td></tr>
+      <tr><td class="o-name" style="color:var(--blue)">community</td><td>A user, original work</td><td>Themselves now; all in Phase 2</td><td class="yes">Yes — their own work</td></tr>
+      <tr><td class="o-name" style="color:var(--red)">user_import</td><td>Extracted from a link</td><td>Only the importer, forever</td><td class="no">No — barred in the database</td></tr>
+    </tbody>
+  </table>
+
+  <div class="prose" style="margin-top:32px;">
+    <p><strong>The legal logic, in plain terms.</strong> A recipe's facts — the ingredients and the steps — are not copyrightable. Extracting those facts from a video into a private text card is the defensible core of what import does. What <em>is</em> protected is the expression: the actual video, the photography, the exact wording. So Hearth extracts facts only — it never rehosts the source video and never copies the creator's prose. And because imported recipes stay <strong>private to the person who imported them</strong>, the use is personal and transformative rather than republishing.</p>
+    <p>The boundary is enforced in the database itself, not just hidden in the interface. A recipe marked <code style="font-family:var(--mono);color:var(--red);font-size:14px;">user_import</code> is structurally barred from ever appearing on the public feed, in search, or in anyone else's view. That single rule is what keeps the feature clean as Hearth grows. Community recipes — a user's own original work — are the clean, fully shareable path, kept deliberately separate from imports.</p>
+    <p>There is also a platform-terms risk separate from copyright: pulling media from TikTok or Instagram can violate their terms regardless of who owns the recipe. That's why import is a <strong>secondary convenience, never a load-bearing pillar</strong> — if a platform closes the door, the core app is unaffected.</p>
+  </div>
+
+  <div class="callout" style="border-left-color:var(--red);">
+    <div class="callout-label" style="color:var(--red);">Necessary disclaimer</div>
+    <p>This is a product-design policy, not legal advice, and the author is not a lawyer. The architecture is built to be defensible, but before monetizing the import feature at scale — or signing meaningful partner deals — a one-time review with an IP lawyer in the operating market (Singapore / target SEA markets) is worth the cost. Build it clean now; get it blessed before it's big.</p>
+  </div>
+</section>
+
+<hr class="div">
+
+<section id="stack">
+  <div class="section-eyebrow">05 · The Stack Got Simpler</div>
+  <h2 class="section-title">The pivot removed three services.</h2>
+  <p class="section-lead">Fewer moving parts, easier to build and run solo. The spine is unchanged; the periphery shrank.</p>
+  <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r-md);padding:8px 24px;margin-top:8px;">
+    <div class="stack-row"><span class="stack-verb sv-keep">Keep</span><span class="name">Supabase</span><span class="why">DB, Auth, Realtime, Storage, Edge Functions, pg_cron. The spine — non-negotiable.</span></div>
+    <div class="stack-row"><span class="stack-verb sv-keep">Keep</span><span class="name">RevenueCat</span><span class="why">Native IAP for subscriptions. Removing it means hand-rolling StoreKit + Play Billing — more work, not less.</span></div>
+    <div class="stack-row"><span class="stack-verb sv-add">Add</span><span class="name">Cloudflare R2</span><span class="why">Image hosting for the feed. Cheap, controlled, no per-minute streaming costs. Replaces any video plan.</span></div>
+    <div class="stack-row"><span class="stack-verb sv-add">Add</span><span class="name">expo-notifications</span><span class="why">On-device local reminders, any day/time. Simpler than server push and works offline.</span></div>
+    <div class="stack-row"><span class="stack-verb sv-drop">Drop</span><span class="name">OneSignal</span><span class="why">Replaced by expo-notifications. One fewer account and SDK.</span></div>
+    <div class="stack-row"><span class="stack-verb sv-drop">Drop</span><span class="name">Branch.io</span><span class="why">Creator affiliate links deferred — didn't fit the content-first model yet.</span></div>
+    <div class="stack-row"><span class="stack-verb sv-drop">Drop</span><span class="name">Upstash Redis</span><span class="why">Replaced by Supabase pg_cron for any server scheduling.</span></div>
+    <div class="stack-row"><span class="stack-verb sv-drop">Drop</span><span class="name">Video hosting</span><span class="why">Image-first feed means no Mux/Cloudflare Stream, no streaming bills.</span></div>
+  </div>
+  <div class="callout">
+    <div class="callout-label">AI, and why it stays cheap</div>
+    <p>The content-first model <strong>reduces</strong> AI cost. The feed is pre-made recipes — browsing costs nothing. Pantry matching is deterministic math, not AI. The "I'm exhausted" button tries to retrieve an existing Hearth recipe before it generates a new one. AI fires mainly for link imports (occasional, user-initiated) and recipe drafting (you, at publish time). GPT-4o-mini does almost everything; GPT-4o is reserved for the Phase 2 chat assistant.</p>
+  </div>
+</section>
+
+<hr class="div">
+
+<section id="money">
+  <div class="section-eyebrow">06 · Revenue</div>
+  <h2 class="section-title">Freemium, unchanged in spirit.</h2>
+  <p class="section-lead">The monetization model from v7 carries over. What's free shifts slightly to protect the new front door: discovery is always free, because paywalling the feed would kill the acquisition engine.</p>
+  <div class="grid-3">
+    <div class="card"><div class="card-num">FREE</div><h3>Always free</h3><p>The entire feed, Explore, search, saving recipes, the pantry, receipt scanning, and — always — the allergen profile. Discovery is never paywalled.</p></div>
+    <div class="card"><div class="card-num">PLUS</div><h3>Metered features</h3><p>Unlimited "I'm exhausted" generations and link imports (free tier is metered), the conversational AI when it ships, and advanced pantry features.</p></div>
+    <div class="card"><div class="card-num">FAMILY</div><h3>Household</h3><p>Shared pantry and shopping list across up to 5 members, real-time synced. The retention tier for households.</p></div>
+  </div>
+  <div class="callout">
+    <div class="callout-label">The free-tier rule that protects growth</div>
+    <p>Browsing recipes is unlimited forever. The metered features are the <em>AI-cost</em> features — generation and import — because those cost real money per call. Never paywall scrolling, searching, or saving. The feed is the top of the funnel; keep it wide open.</p>
+  </div>
+</section>
+
+<hr class="div">
+
+<section id="risks">
+  <div class="section-eyebrow">07 · Risks</div>
+  <h2 class="section-title">What could sink this.</h2>
+  <div class="grid-2" style="margin-top:32px;">
+    <div class="risk-card high">
+      <div class="sev">Severity: High</div>
+      <h3>The empty-feed problem</h3>
+      <p>A content-first app with no content is dead on arrival. If the launch recipe library isn't ready and good, nothing else matters. Mitigation: treat the 30–50 recipe library as a hard launch gate, equal in priority to the code.</p>
+    </div>
+    <div class="risk-card high">
+      <div class="sev">Severity: High</div>
+      <h3>Content operation never stops</h3>
+      <p>Unlike pure software, the feed needs feeding — new recipes regularly or the app goes stale. This is ongoing cost and effort. Mitigation: the community model (Phase 2) is the long-term answer; partner cooks bridge until then.</p>
+    </div>
+    <div class="risk-card">
+      <div class="sev">Severity: Medium</div>
+      <h3>Import legal grey zone</h3>
+      <p>The link-import feature depends on platforms whose terms could change, and on a copyright posture that's defensible but untested at scale. Mitigation: private-only architecture, facts-not-media, and an IP lawyer review before scaling. Import stays non-essential.</p>
+    </div>
+    <div class="risk-card">
+      <div class="sev">Severity: Medium</div>
+      <h3>Crowded category</h3>
+      <p>Recipe apps are many. Hearth's differentiator is the pantry match — "what can I cook right now" — which none of them have. Mitigation: lead every surface with that wedge, not with "another pretty recipe feed."</p>
+    </div>
+  </div>
+</section>
+
+<hr class="div">
+
+<section id="roadmap">
+  <div class="section-eyebrow">08 · Roadmap</div>
+  <h2 class="section-title">From here to launch.</h2>
+  <p class="section-lead">You've built the v7 pantry spine through step 11. The path now is migrate the foundation, build the content-first surfaces on top, then fill the feed.</p>
+  <div class="step-list">
+    <div class="step"><span class="step-n">01</span><div class="step-body"><h4>Migrate the schema &amp; strip dropped services</h4><p>Add recipe origins, likes, collections, steps, import_jobs, and the RLS boundary. Remove OneSignal / Branch / Upstash. The pantry, OCR, and cook trigger stay untouched.</p></div></div>
+    <div class="step"><span class="step-n">02</span><div class="step-body"><h4>Rebuild navigation as 5 tabs + center AI button</h4><p>The new shell. Home, Explore, AI center, Pantry &amp; List, Profile.</p></div></div>
+    <div class="step"><span class="step-n">03</span><div class="step-body"><h4>Build the image feed + likes (Home)</h4><p>The front door. Reels-style scroll, like button, tap to detail. The feed query bars private imports at the database level.</p></div></div>
+    <div class="step"><span class="step-n">04</span><div class="step-body"><h4>Recipe Detail with step view</h4><p>Ingredients with pantry match, nutrition, Creme-style step-by-step, save, like, "I cooked this."</p></div></div>
+    <div class="step"><span class="step-n">05</span><div class="step-body"><h4>Explore (discovery)</h4><p>Recommended, themes, search, cook-from-pantry row. All deterministic — no AI.</p></div></div>
+    <div class="step"><span class="step-n">06</span><div class="step-body"><h4>Move Panic Button → center AI "I'm exhausted"</h4><p>Reuse the logic you built; it retrieves a Hearth recipe before generating.</p></div></div>
+    <div class="step"><span class="step-n">07</span><div class="step-body"><h4>Collections, custom upload &amp; private link import</h4><p>Saved + imported sub-tabs, the community-seed upload flow, and the Flavorish-style import forced to private origin.</p></div></div>
+    <div class="step"><span class="step-n">08</span><div class="step-body"><h4>Reminders, shopping suggestions, paywalls, household</h4><p>Local notifications, confirm-to-add shopping suggestions, RevenueCat limits, household sync.</p></div></div>
+    <div class="step"><span class="step-n">09</span><div class="step-body"><h4>Fill the feed, design pass, then launch</h4><p>Produce the 30–50 recipe launch library, apply the design system across every screen, beta, ship.</p></div></div>
+  </div>
+</section>
+
+<footer>
+  <div class="f-title">Hearth · Business Plan v8</div>
+  <div class="f-sub">Content-first pivot · supersedes v7 · Confidential &amp; proprietary<br>Recipe app with a smart pantry · image reels feed · three recipe origins with a database-enforced public/private boundary · slimmer stack · launch gated on a real recipe library. Content &amp; IP policy is product design, not legal advice — consult an IP lawyer before scaling the import feature.</div>
+</footer>
+
+</body>
+</html>

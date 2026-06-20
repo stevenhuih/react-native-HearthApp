@@ -10,6 +10,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { AuthProvider, useAuth } from '@/hooks/use-auth';
+import { OneSignalBridge } from '@/hooks/use-onesignal';
 import { fontAssets } from '@/theme';
 
 // Keep the native splash up until the design-system fonts are ready so text
@@ -53,6 +54,7 @@ function RootGate() {
   return (
     <>
       <ShareIntentHandler />
+      <OneSignalBridge />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="(auth)" />
@@ -62,6 +64,8 @@ function RootGate() {
         <Stack.Screen name="ocr-confirm" options={{ presentation: 'modal' }} />
         <Stack.Screen name="panic-result" options={{ presentation: 'modal' }} />
         <Stack.Screen name="import" options={{ presentation: 'modal' }} />
+        {/* Recipe Detail — full-screen push (sticky "I cooked this" CTA), not a modal. */}
+        <Stack.Screen name="recipe/[id]" />
       </Stack>
     </>
   );

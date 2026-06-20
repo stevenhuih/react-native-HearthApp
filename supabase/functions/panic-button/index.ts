@@ -190,12 +190,12 @@ async function persistRecipe(
       .from('recipes')
       .insert({
         created_by: userId,
+        origin: 'ai_generated', // private to the user, never public (v2 §02)
         title: recipe.recipe_name,
         source_type: 'ai_generated',
         instructions: recipe.steps,
         cook_time_mins: recipe.total_mins ?? null,
         servings: 1,
-        is_community: false,
       })
       .select('id')
       .single();
