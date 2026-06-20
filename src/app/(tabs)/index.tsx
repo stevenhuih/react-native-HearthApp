@@ -1,76 +1,75 @@
-import { useRouter } from 'expo-router';
-import { useEffect, useMemo } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { ActivityIndicator, Pressable, Text, View, type LayoutChangeEvent } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { daysUntil } from '@/lib/expiry';
-import { usePanicStore } from '@/stores/panic-store';
-import { usePantryStore } from '@/stores/pantry-store';
+import { RecipeFeedCard } from '@/components/feed/recipe-feed-card';
+import { useFeedStore } from '@/stores/feed-store';
+import { colors } from '@/theme';
 
-// Tab 1 — Home (Today). Centerpiece is the Panic Button (US-003). Red Zone
-// cards / savings / streak come in later steps. // TODO(design): throughout.
-// NOTE(v2): this pantry-first Home is replaced by the image reels feed in a later
-// migration step; kept as-is for now beyond removing the old push deep-link handling.
+// Tab 1 — Home: the content-first front door. A vertical, swipe-to-next feed of
+// hearth_featured recipe cards (US-V2-01). Browsing costs zero AI — plain query.
+// // TODO(design): brand mark, "Get Plus" pill, story rings, theme filters.
 export default function HomeScreen() {
-  const router = useRouter();
-  const items = usePantryStore((s) => s.items);
-  const loadAll = usePantryStore((s) => s.loadAll);
-  const runPanic = usePanicStore((s) => s.run);
+  const items = useFeedStore((s) => s.items);
+  const isLoading = useFeedStore((s) => s.isLoading);
+  const error = useFeedStore((s) => s.error);
+  const load = useFeedStore((s) => s.load);
+  const toggleLike = useFeedStore((s) => s.toggleLike);
+  const [listHeight, setListHeight] = useState(0);
 
-  useEffect(() => {
-    loadAll();
-  }, [loadAll]);
-
-  const hasItems = items.length > 0;
-  const expiringSoon = useMemo(
-    () =>
-      items.filter((it) => {
-        const d = daysUntil(it.expires_at);
-        return d !== null && d >= 0 && d <= 7;
-      }).length,
-    [items]
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load])
   );
 
-  function handlePanic() {
-    if (!hasItems) return;
-    runPanic(); // sets loading
-    router.push('/panic-result');
-  }
+  const onLayout = (e: LayoutChangeEvent) => setListHeight(e.nativeEvent.layout.height);
 
   return (
-    <SafeAreaView style={{ flex: 1 }} edges={['top']}>
-      <View className="flex-1 justify-between p-6">
-        <View className="gap-1 pt-4">
-          <Text className="type-script">Good food, made simple</Text>
-          <Text className="type-h1">Tonight</Text>
-          {hasItems ? (
-            <Text className="type-body-sm">
-              {expiringSoon > 0
-                ? `${expiringSoon} item${expiringSoon === 1 ? '' : 's'} expiring this week.`
-                : 'Nothing expiring soon.'}
-            </Text>
-          ) : (
-            <Text className="type-body-sm">Your pantry is empty — scan a receipt to get started.</Text>
-          )}
-        </View>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top']}>
+      <View className="flex-row items-center justify-between px-5 pb-3 pt-2">
+        <Text style={{ fontFamily: 'Inter_800ExtraBold', fontSize: 22, letterSpacing: -0.6, color: colors.ink }}>
+          hearth<Text style={{ color: colors.amber }}>.</Text>
+        </Text>
+        {/* TODO(design): Get Plus pill + header actions. */}
+      </View>
 
-        {/* Panic Button */}
-        <View className="gap-2">
-          <Pressable
-            className={`btn btn-primary ${hasItems ? '' : 'opacity-50'}`}
-            disabled={!hasItems}
-            accessibilityLabel={hasItems ? 'Just tell me what to cook' : 'Scan a receipt first'}
-            onPress={handlePanic}>
-            <Text className="type-button text-white text-center">
-              {hasItems ? "I'm exhausted. Just tell me what to cook." : 'Scan a receipt first'}
+      <View style={{ flex: 1 }} onLayout={onLayout}>
+        {error && items.length === 0 ? (
+          <View className="flex-1 items-center justify-center gap-4 p-6">
+            <Text className="type-body text-center">{error}</Text>
+            <Pressable className="btn btn-primary" onPress={load}>
+              <Text className="type-button text-white">Try again</Text>
+            </Pressable>
+          </View>
+        ) : isLoading && items.length === 0 ? (
+          <View className="flex-1 items-center justify-center">
+            <ActivityIndicator color={colors.muted} />
+          </View>
+        ) : items.length === 0 ? (
+          // Empty feed (pre-launch) — friendly, never blank (US-V2-01).
+          <View className="flex-1 items-center justify-center gap-2 p-8">
+            <Text className="type-display">✦</Text>
+            <Text className="type-h2 text-center">New recipes coming</Text>
+            <Text className="type-body-sm text-center">
+              We’re cooking up the launch library. Check back soon for recipes you can make tonight.
             </Text>
-          </Pressable>
-          {!hasItems ? (
-            <Text className="type-caption text-center">Scan a receipt to unlock this.</Text>
-          ) : null}
-        </View>
-
-        <View />
+          </View>
+        ) : listHeight > 0 ? (
+          <FlashList
+            data={items}
+            keyExtractor={(it) => it.id}
+            renderItem={({ item }) => (
+              <RecipeFeedCard recipe={item} height={listHeight} onToggleLike={toggleLike} />
+            )}
+            pagingEnabled
+            showsVerticalScrollIndicator={false}
+            refreshing={isLoading}
+            onRefresh={load}
+          />
+        ) : null}
       </View>
     </SafeAreaView>
   );

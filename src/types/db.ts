@@ -177,5 +177,19 @@ export interface SavedRecipeCard {
   recipe: { id: string; title: string; cook_time_mins: number | null };
 }
 
+/** One card in the Home image reels feed (US-V2-01). The feed query returns ONLY
+ *  hearth_featured + published recipes; `liked` is derived from the current user's
+ *  own embedded like. */
+export interface FeedRecipe {
+  id: string;
+  title: string;
+  cuisine_theme: string | null;
+  cook_time_mins: number | null;
+  difficulty: RecipeDifficulty | null;
+  hero_image_url: string | null;
+  like_count: number;
+  liked: boolean;
+}
+
 /** Per-ingredient pantry state on the Recipe Detail screen (§07). */
 export type IngredientMatchStatus = 'have' | 'low' | 'missing';
