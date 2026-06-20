@@ -1,98 +1,75 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useEffect, useMemo } from 'react';
+import { Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { daysUntil } from '@/lib/expiry';
+import { usePanicStore } from '@/stores/panic-store';
+import { usePantryStore } from '@/stores/pantry-store';
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
-  return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
-
+// Tab 1 — Home (Today). Centerpiece is the Panic Button (US-003). Red Zone
+// cards / savings / streak come in later steps. // TODO(design): throughout.
 export default function HomeScreen() {
+  const router = useRouter();
+  const items = usePantryStore((s) => s.items);
+  const loadAll = usePantryStore((s) => s.loadAll);
+  const runPanic = usePanicStore((s) => s.run);
+
+  useEffect(() => {
+    loadAll();
+  }, [loadAll]);
+
+  const hasItems = items.length > 0;
+  const expiringSoon = useMemo(
+    () =>
+      items.filter((it) => {
+        const d = daysUntil(it.expires_at);
+        return d !== null && d >= 0 && d <= 7;
+      }).length,
+    [items]
+  );
+
+  function handlePanic() {
+    if (!hasItems) return;
+    runPanic(); // sets loading
+    router.push('/panic-result');
+  }
+
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
+    <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+      <View className="flex-1 justify-between p-6">
+        <View className="gap-1 pt-4">
+          <Text className="type-script">Good food, made simple</Text>
+          <Text className="type-h1">Tonight</Text>
+          {hasItems ? (
+            <Text className="type-body-sm">
+              {expiringSoon > 0
+                ? `${expiringSoon} item${expiringSoon === 1 ? '' : 's'} expiring this week.`
+                : 'Nothing expiring soon.'}
+            </Text>
+          ) : (
+            <Text className="type-body-sm">Your pantry is empty — scan a receipt to get started.</Text>
+          )}
+        </View>
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
+        {/* Panic Button */}
+        <View className="gap-2">
+          <Pressable
+            className={`btn btn-primary ${hasItems ? '' : 'opacity-50'}`}
+            disabled={!hasItems}
+            accessibilityLabel={hasItems ? 'Just tell me what to cook' : 'Scan a receipt first'}
+            onPress={handlePanic}>
+            <Text className="type-button text-white text-center">
+              {hasItems ? "I'm exhausted. Just tell me what to cook." : 'Scan a receipt first'}
+            </Text>
+          </Pressable>
+          {!hasItems ? (
+            <Text className="type-caption text-center">Scan a receipt to unlock this.</Text>
+          ) : null}
+        </View>
 
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+        <View />
+      </View>
+    </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
-  },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
-  },
-  title: {
-    textAlign: 'center',
-  },
-  code: {
-    textTransform: 'uppercase',
-  },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
-  },
-});

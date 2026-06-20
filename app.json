@@ -8,9 +8,11 @@
     "scheme": "hearth",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "com.hearth.app"
     },
     "android": {
+      "package": "com.hearth.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -34,11 +36,25 @@
             "imageWidth": 76
           }
         }
-      ]
+      ],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Hearth uses the camera to scan your grocery receipts.",
+          "photosPermission": "Hearth accesses your photos so you can pick a receipt image."
+        }
+      ],
+      "expo-share-intent"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "3594f1a9-04d5-49ac-86ca-45095a835df0"
+      }
     }
   }
 }
