@@ -9,6 +9,12 @@ import { colors } from '@/theme';
 // The logged-in shell — 4 tabs + a floating center AI button (design system v2 §05,
 // Creme-style). Home · Explore · ✦(AI) · Pantry · Profile. The center is NOT a tab:
 // it opens the AI cook-assistant as a presented modal (/ai).
+//
+// NOTE: <TabList> MUST be a direct child of <Tabs> — expo-router/ui's trigger parser
+// only descends into Fragments/TabList, so wrapping it in a View hides every trigger
+// ("Couldn't find any screens"). The center button is a non-trigger child of TabList:
+// it renders in the bar but the parser ignores it.
+//
 // TODO(design): real Pantry/Profile icons — Home/Explore use the existing template
 // PNGs; Pantry/Profile reuse Home as a placeholder for now.
 const HOME_ICON = require('@/assets/images/tabIcons/home.png');
@@ -38,15 +44,19 @@ const TabButton = forwardRef<View, TabButtonProps>(function TabButton(
 });
 
 // White circle floating above the bar — the signature element that breaks the dark
-// monochrome (design system note). Opens the AI assistant.
+// monochrome (design system note). Reserves a fixed slot in the row; the circle
+// itself floats up via absolute positioning. Opens the AI assistant.
 function CenterButton({ onPress }: { onPress: () => void }) {
   return (
-    <View pointerEvents="box-none" style={{ position: 'absolute', top: -22, left: 0, right: 0, alignItems: 'center' }}>
+    <View style={{ width: 64 }}>
       <Pressable
         onPress={onPress}
         accessibilityRole="button"
         accessibilityLabel="AI cook-assistant"
         style={{
+          position: 'absolute',
+          top: -22,
+          left: 4, // centre the 56px circle in the 64px slot
           width: 56,
           height: 56,
           borderRadius: 28,
@@ -69,29 +79,32 @@ export default function AppTabs() {
   return (
     <Tabs>
       <TabSlot />
-      <View
+      <TabList
         style={{
+          flexDirection: 'row',
+          alignItems: 'center',
           backgroundColor: colors.background,
           borderTopWidth: 1,
           borderTopColor: colors.border,
           paddingBottom: insets.bottom,
         }}>
-        <TabList style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <TabTrigger name="home" href="/" asChild>
-            <TabButton icon={HOME_ICON} label="Home" />
-          </TabTrigger>
-          <TabTrigger name="explore" href="/explore" asChild>
-            <TabButton icon={EXPLORE_ICON} label="Explore" />
-          </TabTrigger>
-          <TabTrigger name="pantry" href="/pantry" asChild>
-            <TabButton icon={HOME_ICON} label="Pantry" />
-          </TabTrigger>
-          <TabTrigger name="profile" href="/profile" asChild>
-            <TabButton icon={HOME_ICON} label="Profile" />
-          </TabTrigger>
-        </TabList>
+        <TabTrigger name="home" href="/" asChild>
+          <TabButton icon={HOME_ICON} label="Home" />
+        </TabTrigger>
+        <TabTrigger name="explore" href="/explore" asChild>
+          <TabButton icon={EXPLORE_ICON} label="Explore" />
+        </TabTrigger>
+
+        {/* Center AI button — non-trigger child: renders in the bar, ignored by the parser. */}
         <CenterButton onPress={() => router.navigate('/ai')} />
-      </View>
+
+        <TabTrigger name="pantry" href="/pantry" asChild>
+          <TabButton icon={HOME_ICON} label="Pantry" />
+        </TabTrigger>
+        <TabTrigger name="profile" href="/profile" asChild>
+          <TabButton icon={HOME_ICON} label="Profile" />
+        </TabTrigger>
+      </TabList>
     </Tabs>
   );
 }
